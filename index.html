@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>White Deal — Единый реестр сделок</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand__logo">⚖</div>
+        <div>
+          <div class="brand__title">White Deal</div>
+          <div class="brand__subtitle">Независимый реестр IT-сделок</div>
+        </div>
+      </div>
+
+      <div class="side-section">
+        <div class="side-section__title">Роль доступа</div>
+        <div class="role-switcher" id="roleSwitcher"></div>
+      </div>
+
+      <div class="side-section">
+        <div class="side-section__title">Навигация</div>
+        <nav id="navList" class="nav-list"></nav>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">Операционный контур</h1>
+          <p id="pageSubtitle">Кликабельный прототип без бэка для демонстрации инвесторам и рынку</p>
+        </div>
+        <div class="topbar__right">
+          <div class="search-box">
+            <span>🔎</span>
+            <input placeholder="Поиск по сделкам, кейсам, рейтингам" />
+          </div>
+          <button class="btn btn--secondary" id="heroAction">Открыть главный сценарий</button>
+        </div>
+      </header>
+
+      <section class="hero-card">
+        <div>
+          <div class="eyebrow">DEMO / STATIC VERSION</div>
+          <h2>Прозрачная регистрация, защита и арбитраж сделок в одном контуре</h2>
+          <p>Все разделы предзаполнены синтетическими данными, поля ввода можно менять, действия переводят на следующий экран и показывают связанный сценарий. Ничего не сохраняется по-настоящему.</p>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><span>147</span><small>новых регистраций за 7 дней</small></div>
+          <div class="hero-stat"><span>94%</span><small>SLA рассмотрения споров</small></div>
+          <div class="hero-stat"><span>26</span><small>активных вендоров</small></div>
+        </div>
+      </section>
+
+      <section class="kpis" id="kpis"></section>
+      <section id="content"></section>
+    </main>
+  </div>
+
+  <div class="modal hidden" id="modal">
+    <div class="modal__backdrop" id="modalBackdrop"></div>
+    <div class="modal__dialog">
+      <div class="modal__header">
+        <div>
+          <h3 id="modalTitle">Действие выполнено</h3>
+          <p id="modalSubtitle">Это демонстрационный сценарий</p>
+        </div>
+        <button class="icon-btn" id="modalClose">✕</button>
+      </div>
+      <div class="modal__body" id="modalBody"></div>
+      <div class="modal__footer" id="modalFooter"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
