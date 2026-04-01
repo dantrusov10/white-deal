@@ -1,62 +1,85 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>White Deal — независимый реестр IT-сделок</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>White Deal — Реестр регистраций сделок</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div id="app" class="app-shell">
+  <div class="app-shell">
     <aside class="sidebar">
-      <div class="brand-block">
-        <div class="brand-mark">⚖</div>
+      <div class="brand">
+        <div class="brand-mark">WD</div>
         <div>
           <div class="brand-title">White Deal</div>
-          <div class="brand-subtitle">Независимый реестр IT-сделок</div>
+          <div class="brand-sub">Единый реестр регистраций сделок</div>
         </div>
       </div>
 
-      <div class="side-group">
-        <div class="side-label">Режим просмотра</div>
-        <div class="role-switch" id="roleSwitch"></div>
-      </div>
-
-      <div class="side-group">
-        <div class="side-label">Разделы</div>
-        <nav id="navMenu" class="nav-menu"></nav>
-      </div>
-
-      <div class="side-group side-note">
-        <div class="side-note-title">Демо-режим</div>
-        <div class="side-note-text">
-          Все данные синтетические. Поля редактируются, но ничего не сохраняется. Логика экранов прошита для показа реалистичного флоу.
+      <div class="role-block">
+        <div class="section-label">Роль доступа</div>
+        <div class="role-switch">
+          <button class="role-btn active" data-role="partner">Партнер</button>
+          <button class="role-btn" data-role="vendor">Вендор</button>
+          <button class="role-btn" data-role="arbitrage">Арбитраж</button>
+          <button class="role-btn" data-role="market">Рынок</button>
         </div>
       </div>
+
+      <nav class="nav">
+        <div class="section-label">Разделы</div>
+        <button class="nav-btn active" data-section="summary">Сводка</button>
+        <button class="nav-btn" data-section="registry">Реестр регистраций</button>
+        <button class="nav-btn" data-section="disputes">Реестр споров</button>
+        <button class="nav-btn" data-section="catalog-vendors">Каталог вендоров</button>
+        <button class="nav-btn" data-section="catalog-partners">Каталог партнеров</button>
+        <button class="nav-btn" data-section="ratings">Рейтинги</button>
+        <button class="nav-btn" data-section="analytics">Аналитика рынка</button>
+        <button class="nav-btn" data-section="history">Журнал действий</button>
+      </nav>
     </aside>
 
-    <main class="main-shell">
+    <main class="main-area">
       <header class="topbar">
         <div>
-          <div class="page-kicker">Кликабельный статический прототип</div>
-          <h1 id="pageTitle" class="page-title"></h1>
+          <h1 id="page-title">Сводка</h1>
+          <div class="page-subtitle" id="page-subtitle">Операционная сводка по текущей роли и ключевым действиям</div>
         </div>
         <div class="topbar-actions">
-          <button class="ghost-btn" id="openQuickHelp">Как устроен прототип</button>
-          <button class="primary-btn" id="openWelcome">Обзор покрытия</button>
+          <input id="global-search" class="search" placeholder="Поиск по номеру, клиенту, участнику" />
+          <button class="ghost-btn" id="open-register-flow">Новая регистрация</button>
         </div>
       </header>
 
-      <section class="hero-row" id="heroRow"></section>
-      <section class="kpi-grid" id="kpiGrid"></section>
-      <section id="contentArea" class="content-area"></section>
+      <section id="content"></section>
     </main>
+
+    <aside class="details-panel">
+      <div class="details-header">
+        <div class="details-title">Карточка объекта</div>
+        <button class="link-btn" id="clear-details">Очистить</button>
+      </div>
+      <div id="details-content" class="details-content muted">
+        Выберите запись в реестре, уведомление, участника или аналитический сигнал.
+      </div>
+    </aside>
   </div>
 
-  <div id="modalRoot"></div>
+  <div class="modal hidden" id="modal">
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="modal-title">Процедура</div>
+          <div class="modal-subtitle" id="modal-subtitle">Пошаговая форма</div>
+        </div>
+        <button class="link-btn" id="close-modal">Закрыть</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
