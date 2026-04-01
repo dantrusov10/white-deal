@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>White Deal — Единый реестр регистраций сделок</title>
+  <title>White Deal Registry</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -11,65 +11,67 @@
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-mark">WD</div>
-        <div class="brand-text">
+        <div>
           <div class="brand-title">White Deal Registry</div>
           <div class="brand-subtitle">Единый реестр регистраций сделок</div>
         </div>
       </div>
 
-      <div class="role-switch">
-        <label for="roleSelect">Роль доступа</label>
-        <select id="roleSelect">
-          <option value="partner">Партнер</option>
-          <option value="vendor">Вендор</option>
-          <option value="arbitrage">Арбитраж</option>
-          <option value="market">Обзор рынка</option>
-        </select>
+      <div class="sidebar-block">
+        <label class="field-label">Роль доступа</label>
+        <select id="roleSelect" class="select"></select>
       </div>
 
-      <nav class="nav" id="nav"></nav>
+      <div class="sidebar-block">
+        <div class="menu-title">Разделы</div>
+        <nav id="navMenu" class="nav"></nav>
+      </div>
 
-      <div class="sidebar-note">
-        <div class="sidebar-note-title">Статус системы</div>
-        <div>Демо-прототип без бэка. Все действия имитируются, данные синтетические.</div>
+      <div class="sidebar-status">
+        <div class="status-title">Статус системы</div>
+        <div class="status-text">Демо-прототип без бэка. Действия имитируются, данные синтетические.</div>
       </div>
     </aside>
 
-    <div class="content-shell">
+    <div class="workspace">
       <header class="topbar">
-        <div class="topbar-left">
-          <div class="page-title" id="pageTitle">Сводка</div>
-          <div class="page-subtitle" id="pageSubtitle">Операционная панель участника рынка</div>
+        <div>
+          <div id="pageEyebrow" class="page-eyebrow">Операционный контур</div>
+          <h1 id="pageTitle" class="page-title">Сводка</h1>
         </div>
-        <div class="topbar-right">
-          <input id="globalSearch" class="search-input" type="text" placeholder="Поиск по номеру, участнику, предмету, типу..." />
+        <div class="topbar-actions">
+          <div class="search-wrap">
+            <input id="searchInput" class="search" placeholder="Поиск по номеру, участнику, предмету, типу..." />
+          </div>
           <button class="button button-secondary" id="openJournalBtn">Журнал действий</button>
         </div>
       </header>
 
-      <div class="main-layout">
-        <main class="center-pane" id="centerPane"></main>
-        <aside class="detail-pane" id="detailPane">
-          <div class="detail-empty">
-            <div class="detail-empty-title">Панель сведений</div>
-            <div class="detail-empty-text">Выберите запись из реестра, уведомление, сигнал или участника. Подробная карточка откроется здесь без перехода на отдельный экран.</div>
-          </div>
+      <main class="content-grid">
+        <section class="main-column">
+          <div id="mainContent"></div>
+        </section>
+        <aside class="detail-column">
+          <div id="detailPanel" class="detail-panel"></div>
         </aside>
-      </div>
+      </main>
     </div>
   </div>
 
-  <div class="modal-backdrop hidden" id="modalBackdrop">
-    <div class="modal" id="modal">
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <div class="modal">
       <div class="modal-header">
         <div>
-          <div class="modal-title" id="modalTitle">Процедура</div>
-          <div class="modal-subtitle" id="modalSubtitle">Формальный шаг процесса</div>
+          <div id="modalEyebrow" class="modal-eyebrow">Процедура</div>
+          <div id="modalTitle" class="modal-title">Действие</div>
         </div>
-        <button class="modal-close" id="modalClose">×</button>
+        <button class="icon-button" onclick="closeModal()">✕</button>
       </div>
-      <div class="modal-body" id="modalBody"></div>
-      <div class="modal-footer" id="modalFooter"></div>
+      <div id="modalBody" class="modal-body"></div>
+      <div class="modal-footer">
+        <button class="button button-secondary" onclick="closeModal()">Закрыть</button>
+        <button class="button" onclick="closeModal()">Подтвердить</button>
+      </div>
     </div>
   </div>
 
