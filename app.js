@@ -1,519 +1,826 @@
-const appState = {
+
+const state = {
   role: 'partner',
   section: 'summary',
-  modalStep: 1,
-  registerForm: {
-    type: 'Проект', vendor: 'Инферит ИТМен', title: 'Модернизация CMDB и инвентаризации ИТ-активов',
-    client: 'АО ВолгаЭнерго', inn: '7704123456', segment: 'Энергетика', solutionClass: 'ITAM / CMDB',
-    amount: '27 800 000 ₽', closeDate: '30.06.2026', description: 'Проект импортозамещения системы учета ИТ-активов, CMDB и сервисных связей.',
-    basis: 'Проведены 2 квалификационные встречи, согласован предварительный контур решения, подтвержден интерес ИТ-директора.',
-    evidence: 'Встреча 05.03.2026; Коммерческое предложение v1; Протокол сессии discovery; Контакт ЛПР подтвержден.'
+  selected: null,
+  modal: null,
+  filters: {
+    registryStatus: '',
+    registrySegment: '',
+    registryClass: '',
+    disputesStatus: '',
+    catalogTab: 'vendors',
+    ratingsTab: 'vendors',
+    analyticsSegment: 'all',
+    analyticsClass: 'all',
+    analyticsPeriod: 'quarter'
   }
 };
 
-const datasets = {
-  summary: {
-    partner: {
-      stats: [
-        ['Активные регистрации', '18', '+3 за 14 дней'],
-        ['Требуют продления', '2', '1 — срочно сегодня'],
-        ['Открытые споры', '1', 'SLA: 18 часов'],
-        ['Рейтинг партнера', '93/100', 'Platinum / высокий уровень доверия'],
-      ],
-      notices: [
-        {title:'Требуется продление по DR-2026-00111', text:'До окончания защиты осталось 2 дня. Необходимо приложить подтверждающие материалы.', tag:'warn'},
-        {title:'Вендор рассмотрел регистрацию DR-2026-00129', text:'По сделке запрошено уточнение состава решения и статуса пилота.', tag:'info'},
-        {title:'Зафиксирован сигнал смежной активности', text:'По одному из ваших проектов появился технологический партнер в составе комплексного предложения.', tag:'neutral'}
-      ],
-      signals: [
-        'В марте рост регистраций в финансовом секторе составил 32% по сравнению с февралем.',
-        'Класс решений Discovery устойчиво растет в промышленности 6 месяцев подряд.',
-        'В сегменте BI наблюдается снижение новых регистраций у компаний среднего масштаба.'
-      ]
-    },
-    vendor: {
-      stats: [
-        ['Новые поступления', '7', '3 требуют решения сегодня'],
-        ['Активные защиты', '64', 'Средний срок — 29 дней'],
-        ['Рейтинг вендора', '91/100', 'Надежный участник рынка'],
-        ['Конфликтные случаи', '4', '2 урегулированы без эскалации'],
-      ],
-      notices: [
-        {title:'Новая регистрация DR-2026-00129', text:'Поступила валидированная регистрация на проект FinOps. Требуется решение вендора.', tag:'info'},
-        {title:'Открыто оспаривание по DR-2026-00103', text:'Партнер сообщает о попытке параллельной регистрации. Срок ответа — до 18:00.', tag:'danger'},
-        {title:'Сигнал о мультивендорной сборке', text:'По проекту DR-2026-00124 замечено 2 смежных решения в рамках комплексного предложения.', tag:'neutral'}
-      ],
-      signals: [
-        'Рост заявок из финсектора +32% в марте может потребовать корректировки партнерского приоритета.',
-        'На классе решений Discovery наблюдается усиление спроса в промышленных компаниях.',
-        'В сегменте ITSM снизилась доля регистраций с признаком быстрого закрытия.'
-      ]
-    },
-    arbitrage: {
-      stats: [
-        ['Дел в очереди', '12', '4 новых за сутки'],
-        ['Нарушение SLA', '1', 'Требует приоритизации'],
-        ['Авторазбор', '73%', 'Без участия оператора'],
-        ['Доверие к решениям', '94%', 'По данным повторных апелляций'],
-      ],
-      notices: [
-        {title:'ARB-2026-0081 требует решения', text:'Срок рассмотрения истекает через 6 часов. Нужна финализация уровня 2.', tag:'danger'},
-        {title:'Новый кейс по отказу в продлении', text:'Партнер приложил документы; вендор указывает на недостаточный прогресс.', tag:'info'},
-        {title:'Системный сигнал', text:'Зафиксирован рост однотипных споров в классе решений Discovery.', tag:'neutral'}
-      ],
-      signals: [
-        'Частота споров по продлению выросла в промышленных проектах за последние 2 месяца.',
-        'Большинство конфликтов в марте связано с неопределенностью статуса активности партнера.',
-        'Среднее время урегулирования по level 1 сократилось до 4.2 часов.'
-      ]
-    },
-    market: {
-      stats: [
-        ['Новых регистраций за 30 дней', '147', '+18% к прошлому периоду'],
-        ['Активных вендоров', '26', '11 с рейтингом выше 85'],
-        ['Активных партнеров', '94', '24 уровня Platinum / Gold'],
-        ['Открытых споров', '9', 'SLA соблюдается в 94% случаев'],
-      ],
-      notices: [
-        {title:'Финансовый сектор растет', text:'В марте зафиксирован устойчивый рост регистраций решений классов BI, ITSM и Discovery.', tag:'info'},
-        {title:'Промышленность: сигнал по Discovery', text:'В классе решений Discovery виден рост 6 месяцев подряд.', tag:'neutral'},
-        {title:'Снижение интереса к базовому ITSM', text:'За последние 2 квартала объем регистраций постепенно смещается в сторону платформенных решений.', tag:'warn'}
-      ],
-      signals: [
-        'В марте массово регистрируются сделки в финансовом секторе.',
-        'Решения класса Discovery массово регистрируются в промышленности на горизонте 6 месяцев.',
-        'В сегменте энергетики растет интерес к ITAM / CMDB и каталогу ПО.'
-      ]
-    }
-  },
-  registrations: [
-    {id:'DR-2026-00124', date:'15.03.2026', partner:'Softline Integration', vendor:'Инферит ИТМен', client:'АО ВолгаЭнерго', subject:'Модернизация CMDB и инвентаризации ИТ-активов', status:'Активна', statusClass:'ok', until:'15.05.2026', risk:'Низкий', segment:'Энергетика', class:'ITAM / CMDB', amount:'27 800 000 ₽', timeline:[['15.03.2026 10:42','Регистрация создана партнером'],['15.03.2026 10:43','Автопроверка: 94/100'],['15.03.2026 12:08','Вендор подтвердил регистрацию'],['18.03.2026 14:15','Загружено коммерческое предложение']], evidence:['Встреча 05.03.2026','Коммерческое предложение v1','Протокол discovery-сессии','Контакт ЛПР подтвержден'], alerts:['Замечена смежная регистрация технологического партнера без нарушения текущей защиты.'], lifecycle:'Активна', ratingImpact:'Положительное влияние на рейтинг партнера и вендора'},
-    {id:'DR-2026-00129', date:'28.03.2026', partner:'Rubytech Solutions', vendor:'CloudMaster', client:'ООО СеверЛогистика', subject:'Пилот FinOps и контроль неиспользуемых VM', status:'Ожидает решения', statusClass:'warn', until:'—', risk:'Средний', segment:'Логистика', class:'FinOps', amount:'8 400 000 ₽', timeline:[['28.03.2026 09:20','Регистрация создана'],['28.03.2026 09:21','Автопроверка: 82/100'],['28.03.2026 09:21','Передано вендору на решение']], evidence:['Встреча 22.03.2026','Краткий расчет экономии','Черновой пилотный контур'], alerts:['Вендор запросил уточнение состава решения и статуса пилота.'], lifecycle:'Проверка вендором', ratingImpact:'Нейтральное'},
-    {id:'DR-2026-00111', date:'01.03.2026', partner:'T1 Infra Projects', vendor:'Polymatica', client:'ПАО РегионБанк', subject:'Комплексное BI + каталог ПО + витрина отчетности', status:'Требует продления', statusClass:'info', until:'02.04.2026', risk:'Средний', segment:'Финансы', class:'BI / Data Catalog', amount:'42 000 000 ₽', timeline:[['01.03.2026 11:05','Регистрация подтверждена'],['14.03.2026 17:40','Добавлен протокол встречи'],['29.03.2026 09:00','Система запросила продление']], evidence:['КП v2','Протокол встречи','Письмо от бизнес-заказчика'], alerts:['Необходимо подтвердить активность до истечения срока защиты.'], lifecycle:'Ожидает продления', ratingImpact:'Риск снижения рейтинга при отсутствии подтверждения'},
-    {id:'DR-2026-00103', date:'24.02.2026', partner:'ICL Services', vendor:'Naumen', client:'ГК СтройИнвест', subject:'Сервис-деск и управление изменениями', status:'Спор', statusClass:'danger', until:'08.04.2026', risk:'Высокий', segment:'Строительство', class:'ITSM', amount:'19 600 000 ₽', timeline:[['24.02.2026 16:18','Сделка зарегистрирована'],['24.02.2026 18:10','Вендор подтвердил регистрацию'],['27.03.2026 13:10','Подана жалоба: попытка параллельной регистрации']], evidence:['Первичный тендерный контур','ТЗ от клиента','История переписки'], alerts:['Открыт спор по попытке параллельной регистрации.'], lifecycle:'Арбитраж', ratingImpact:'Негативное влияние при подтверждении нарушения'}
+const navConfig = {
+  partner: [
+    ['summary','Сводка'],
+    ['registry','Реестр регистраций'],
+    ['disputes','Реестр споров'],
+    ['catalog','Каталог участников'],
+    ['ratings','Рейтинги'],
+    ['analytics','Аналитика рынка'],
+    ['journal','Журнал действий']
   ],
-  disputes: [
-    {id:'ARB-2026-0081', deal:'DR-2026-00103', type:'Попытка параллельной регистрации', complainant:'ICL Services', otherParty:'Naumen / второй партнер', level:'Уровень 2 — специалист', status:'В рассмотрении', statusClass:'warn', sla:'18 часов', summary:'Партнер сообщает о попытке подтверждения конкурирующей регистрации по уже защищенной сделке.', auto:'Совпадение клиента и предмета проекта подтверждено', decisions:['Автоуровень: найдено 87% совпадения по предмету и 100% по клиенту','Уровень 2: проводится сверка материалов и внутренней коммуникации вендора']},
-    {id:'ARB-2026-0072', deal:'DR-2026-00094', type:'Отказ в продлении', complainant:'Rubytech Solutions', otherParty:'CloudMaster', level:'Уровень 3 — руководитель', status:'Назначено финальное решение', statusClass:'info', sla:'6 часов', summary:'Партнер приложил доказательства активности; вендор считает прогресс недостаточным.', auto:'Материалы подтверждены частично', decisions:['Автоуровень: обнаружены новые материалы после срока первичной защиты','Уровень 2: подтверждены 2 активности из 4']},
-    {id:'ARB-2026-0065', deal:'DR-2026-00088', type:'Непрозрачный отказ', complainant:'Softline Integration', otherParty:'Polymatica', level:'Уровень 1 — автоматический', status:'Закрыто', statusClass:'ok', sla:'Завершено', summary:'Система выявила отсутствие дубля и нарушение внутренней логики отказа.', auto:'Оснований для отказа не найдено', decisions:['Автоуровень: рекомендация пересмотра','Вендор изменил статус на подтверждено']}
+  vendor: [
+    ['summary','Сводка'],
+    ['registry','Реестр регистраций'],
+    ['disputes','Реестр споров'],
+    ['catalog','Каталог участников'],
+    ['ratings','Рейтинги'],
+    ['analytics','Аналитика рынка'],
+    ['journal','Журнал действий']
   ],
-  vendors: [
-    {name:'Инферит ИТМен', category:'ITAM / CMDB', segment:'Enterprise IT', rating:96, disputes:1, active:64, transparency:97, speed:93, trust:'Эталон', note:'Высокая скорость решений, низкая конфликтность'},
-    {name:'Polymatica', category:'BI / Analytics', segment:'Data Platforms', rating:91, disputes:3, active:41, transparency:90, speed:88, trust:'Надежный', note:'Стабильный участник с высокой долей защищенных регистраций'},
-    {name:'CloudMaster', category:'FinOps / Cloud', segment:'Infrastructure', rating:88, disputes:5, active:35, transparency:86, speed:84, trust:'Стабильный', note:'Высокая активность в сегменте логистики и mid-market'},
-    {name:'Naumen', category:'ITSM', segment:'Service Management', rating:84, disputes:6, active:28, transparency:82, speed:81, trust:'Под наблюдением', note:'Повышенная частота споров по параллельным регистрациям'},
-    {name:'Billogic', category:'Billing / ERP', segment:'Enterprise Systems', rating:87, disputes:2, active:19, transparency:88, speed:83, trust:'Стабильный', note:'Низкий уровень нарушений, умеренный объем регистрации'}
+  arbitrage: [
+    ['summary','Сводка'],
+    ['registry','Реестр регистраций'],
+    ['disputes','Реестр споров'],
+    ['catalog','Каталог участников'],
+    ['ratings','Рейтинги'],
+    ['analytics','Аналитика рынка'],
+    ['journal','Журнал действий']
   ],
-  partners: [
-    {name:'Softline Integration', specialization:'Enterprise infra / ITAM', tier:'Platinum', rating:93, winRate:'41%', active:18, disputes:1, note:'Высокое качество материалов и соблюдение сроков продления'},
-    {name:'Rubytech Solutions', specialization:'Cloud / FinOps', tier:'Gold', rating:87, winRate:'38%', active:12, disputes:2, note:'Сильная активность в пилотных внедрениях'},
-    {name:'ICL Services', specialization:'ITSM / Support', tier:'Gold', rating:82, winRate:'36%', active:9, disputes:3, note:'Часто работает в конкурентных тендерных контурах'},
-    {name:'T1 Infra Projects', specialization:'BI / Integration', tier:'Silver', rating:85, winRate:'32%', active:11, disputes:1, note:'Нуждается в улучшении дисциплины продлений'},
-    {name:'K2Tech Consulting', specialization:'Discovery / Data', tier:'Gold', rating:89, winRate:'39%', active:13, disputes:1, note:'Высокий спрос в индустриальном сегменте'}
-  ],
-  marketSignals: [
-    {title:'Рост регистраций в финансовом секторе', text:'В марте количество регистраций в финансовом секторе выросло на 32% относительно февраля. Наибольший вклад внесли BI, ITSM и Discovery-проекты.', impact:'Может служить сигналом для перераспределения фокуса партнерских программ и маркетинга.', trend:'Рост', chart:[42,51,56,59,74,81]},
-    {title:'Discovery в промышленности растет 6 месяцев подряд', text:'Решения класса Discovery демонстрируют устойчивое наращивание регистраций в промышленном сегменте.', impact:'Сигнал для усиления продуктовой стратегии и развития отраслевых пресейл-команд.', trend:'Рост', chart:[22,24,29,35,41,47]},
-    {title:'BI в среднем бизнесе замедляется', text:'За последние 2 квартала доля новых регистраций BI-решений в среднем бизнесе снизилась на 11%.', impact:'Может означать насыщение рынка или смещение в сторону комплексных платформ.', trend:'Снижение', chart:[58,56,52,49,47,45]}
-  ],
-  history: [
-    ['30.03.2026 17:42','Система','Сформирован обезличенный сигнал по росту Discovery в промышленности'],
-    ['30.03.2026 15:10','Вендор CloudMaster','Запрошено уточнение по DR-2026-00129'],
-    ['29.03.2026 09:00','Система','Запрошено продление по DR-2026-00111'],
-    ['27.03.2026 13:10','ICL Services','Подано оспаривание по DR-2026-00103'],
-    ['18.03.2026 14:15','Softline Integration','Загружено коммерческое предложение по DR-2026-00124']
+  market: [
+    ['summary','Сводка'],
+    ['catalog','Каталог участников'],
+    ['ratings','Рейтинги'],
+    ['analytics','Аналитика рынка'],
+    ['journal','Журнал действий']
   ]
 };
 
-const meta = {
-  summary: ['Сводка','Операционная сводка по текущей роли и ключевым действиям'],
-  registry: ['Реестр регистраций','Единый список регистраций, сроков, статусов, рисков и связанных действий'],
-  disputes: ['Реестр споров','Контур оспаривания, эскалаций и многоуровневого рассмотрения'],
-  'catalog-vendors': ['Каталог вендоров','Поиск вендоров по классу решений, рейтингу, активности и качеству поведения'],
-  'catalog-partners': ['Каталог партнеров','Выбор партнеров по специализации, рейтингу, активности и результативности'],
-  ratings: ['Рейтинги','Репутационный контур вендоров и партнеров с методикой расчета'],
-  analytics: ['Аналитика рынка','Обезличенные сигналы и динамика регистраций по классам решений и сегментам'],
-  history: ['Журнал действий','Фиксация процедурных и пользовательских действий в системе']
+const data = {
+  registrations: [
+    {id:'WD-2026-00121',date:'28.03.2026',partner:'Softline Integration',vendor:'Инферит ИТМен',client:'АО ВолгаЭнерго',subject:'Модернизация Discovery и инвентаризации',status:'Активна',statusKey:'active',term:'15.05.2026',risk:'Низкий',riskKey:'low',segment:'Промышленность',class:'Discovery',amount:'27 800 000 ₽',materials:['Встреча от 21.03','Коммерческое предложение № КП-114','Пилотный контур согласован','Контакт ЛПР подтвержден'],signals:['Зафиксирован 1 смежный технологический вендор','Мультивендорная связка: Discovery + BI'],history:['28.03 10:14 — регистрация принята системой','28.03 10:19 — автопроверка завершена: 92/100','28.03 13:20 — вендор подтвердил защиту','30.03 11:40 — добавлено КП'],lifecycle:'Активна',violation:'Нет'},
+    {id:'WD-2026-00122',date:'29.03.2026',partner:'Rubytech Solutions',vendor:'CloudMaster',client:'ООО СеверЛогистика',subject:'Пилот FinOps и контроль неиспользуемых VM',status:'Ожидает',statusKey:'waiting',term:'—',risk:'Средний',riskKey:'mid',segment:'Логистика',class:'FinOps',amount:'8 400 000 ₽',materials:['Встреча от 26.03','Черновое КП','Контакт ИТ-директора'],signals:['Смежная регистрация по BI отсутствует','Конкурирующие сигналы не выявлены'],history:['29.03 09:20 — регистрация подана','29.03 09:21 — автопроверка завершена: 84/100','29.03 09:22 — направлено вендору'],lifecycle:'На рассмотрении',violation:'Нет'},
+    {id:'WD-2026-00118',date:'22.03.2026',partner:'T1 Infra Projects',vendor:'Polymatica',client:'ПАО РегионБанк',subject:'BI и витрина управленческой отчетности',status:'Продление',statusKey:'extend',term:'02.04.2026',risk:'Средний',riskKey:'mid',segment:'Финансы',class:'BI',amount:'42 000 000 ₽',materials:['Встреча от 14.03','КП № 52-РБ','Пилотный план'],signals:['На проекте отмечен технологический партнер по каталогу ПО','Рост активности класса BI в сегменте финансы'],history:['22.03 11:05 — защита подтверждена','29.03 09:00 — системой запрошено продление','31.03 12:00 — партнер загрузил материалы на продление'],lifecycle:'Требует решения',violation:'Нет'},
+    {id:'WD-2026-00103',date:'14.03.2026',partner:'ICL Services',vendor:'Naumen',client:'ГК СтройИнвест',subject:'ITSM и управление изменениями',status:'Спор',statusKey:'dispute',term:'08.04.2026',risk:'Высокий',riskKey:'high',segment:'Строительство',class:'ITSM',amount:'19 600 000 ₽',materials:['Встреча от 10.03','КП по базовому контуру','Контакт заказчика подтвержден'],signals:['Поступил сигнал о конкурирующей активности','Есть challenge со стороны второго партнера'],history:['14.03 16:18 — регистрация принята','14.03 18:10 — защита подтверждена','27.03 13:10 — открыт спор','30.03 17:40 — передано на уровень 2'],lifecycle:'В споре',violation:'Потенциальное нарушение порядка подтверждения'},
+    {id:'WD-2026-00125',date:'30.03.2026',partner:'К2Тех Альянс',vendor:'Billogic',client:'Федеральная розница',subject:'Контур биллинга и отчетности по потреблению услуг',status:'Активна',statusKey:'active',term:'17.05.2026',risk:'Низкий',riskKey:'low',segment:'Retail',class:'Billing',amount:'13 200 000 ₽',materials:['Встреча от 28.03','КП № B-19','Схема интеграции'],signals:['Конкурирующих регистраций не выявлено'],history:['30.03 10:10 — регистрация принята','30.03 10:14 — автопроверка 90/100','30.03 11:40 — защита подтверждена'],lifecycle:'Активна',violation:'Нет'},
+    {id:'WD-2026-00117',date:'21.03.2026',partner:'Softline Integration',vendor:'Инферит ИТМен',client:'АО СеверНефть',subject:'Аудит ИТ-активов и лицензионных рисков',status:'Выиграна',statusKey:'active',term:'Закрыта',risk:'Низкий',riskKey:'low',segment:'Промышленность',class:'Discovery',amount:'31 500 000 ₽',materials:['Встреча от 13.03','Финальное КП','Пилот завершен'],signals:['Проект закрыт без спора'],history:['21.03 09:00 — регистрация принята','23.03 15:15 — защита подтверждена','31.03 18:00 — отмечено закрытие сделки: выиграна'],lifecycle:'Выиграна',violation:'Нет'}
+  ],
+  disputes: [
+    {id:'ARB-2026-0081',deal:'WD-2026-00103',type:'Оспаривание действующей защиты',parties:'ICL Services / Naumen / второй партнер',level:'Уровень 2',status:'В рассмотрении',statusKey:'waiting',sla:'18 часов',basis:'Заявитель сообщает о попытке параллельного подтверждения по уже действующей защите.',arguments:['Партнер указывает на приоритет по дате регистрации','Вендор ссылается на неполноту активности','Второй партнер подал challenge по качеству ведения'],materials:['Карточка регистрации','История действий','Загруженное КП','Комментарии вендора'],auto:'Совпадение по клиенту и предмету проекта: высокое. Риск нарушения порядка подтверждения: высокий.',levels:['Уровень 1: выявлено совпадение','Уровень 2: назначена ручная верификация'],final:'Решение не вынесено'},
+    {id:'ARB-2026-0072',deal:'WD-2026-00118',type:'Спор по продлению',parties:'T1 Infra Projects / Polymatica',level:'Уровень 3',status:'Финальное рассмотрение',statusKey:'extend',sla:'6 часов',basis:'Вендор отклонил продление, партнер оспорил решение и приложил дополнительные подтверждающие материалы.',arguments:['Партнер приложил материалы о реальном ведении проекта','Вендор считает прогресс недостаточным'],materials:['Протокол встречи','Обновленное КП','Письмо клиента'],auto:'Материалы релевантны, однако интервал обновлений выше среднего.',levels:['Уровень 1: формальная проверка пройдена','Уровень 2: решение не достигнуто','Уровень 3: вынесение итогового решения'],final:'Ожидается'},
+    {id:'ARB-2026-0065',deal:'WD-2026-00088',type:'Жалоба на непрозрачный отказ',parties:'Softline Integration / Polymatica',level:'Уровень 1',status:'Закрыто',statusKey:'active',sla:'Исполнено',basis:'Партнер указал на отсутствие мотивировки при первичном отказе.',arguments:['В протоколе отказа не были раскрыты основания'],materials:['Первичный отказ','Комментарий вендора'],auto:'Формулировка отказа не соответствовала регламенту прозрачности.',levels:['Уровень 1: рекомендация вендору пересмотреть решение'],final:'Статус регистрации изменен на подтверждено'}
+  ],
+  vendors: [
+    {name:'Инферит ИТМен',rating:96,category:'Discovery / ITAM / CMDB',activity:'18 активных регистраций',disputes:'1',history:'Стабильный рост активности 4 месяца подряд',violations:'Нет значимых нарушений',scoreFactors:{protection:98,speed:95,conflicts:93,decisions:97}},
+    {name:'CloudMaster',rating:88,category:'FinOps / Cloud',activity:'12 активных регистраций',disputes:'2',history:'Резкий рост в логистике и retail',violations:'1 спор по срокам решения',scoreFactors:{protection:90,speed:84,conflicts:86,decisions:89}},
+    {name:'Polymatica',rating:91,category:'BI / Аналитика',activity:'14 активных регистраций',disputes:'2',history:'Устойчивый спрос в фин секторе',violations:'1 кейс по непрозрачному отказу',scoreFactors:{protection:92,speed:89,conflicts:90,decisions:93}},
+    {name:'Naumen',rating:84,category:'ITSM / Service Desk',activity:'9 активных регистраций',disputes:'3',history:'Падение активности в enterprise',violations:'2 кейса challenge',scoreFactors:{protection:83,speed:82,conflicts:79,decisions:90}},
+    {name:'Billogic',rating:89,category:'Billing / Usage',activity:'7 активных регистраций',disputes:'0',history:'Рост в retail и сервисных компаниях',violations:'Нет',scoreFactors:{protection:90,speed:88,conflicts:87,decisions:91}}
+  ],
+  partners: [
+    {name:'Softline Integration',rating:93,special:'Discovery / BI / комплексные проекты',winRate:'41%',activeDeals:'18',history:'Высокая дисциплина ведения материалов',violations:'Нет',scoreFactors:{protection:94,speed:91,conflicts:90,decisions:95}},
+    {name:'Rubytech Solutions',rating:87,special:'Cloud / FinOps',winRate:'38%',activeDeals:'12',history:'Рост активности в инфраструктурных проектах',violations:'Нет',scoreFactors:{protection:88,speed:86,conflicts:84,decisions:90}},
+    {name:'ICL Services',rating:82,special:'ITSM / интеграция',winRate:'36%',activeDeals:'9',history:'Снижение качества в спорных кейсах',violations:'1 активный challenge',scoreFactors:{protection:82,speed:80,conflicts:78,decisions:88}},
+    {name:'T1 Infra Projects',rating:85,special:'BI / enterprise',winRate:'34%',activeDeals:'11',history:'Сильные long-cycle проекты',violations:'1 спор по продлению',scoreFactors:{protection:86,speed:81,conflicts:84,decisions:89}},
+    {name:'К2Тех Альянс',rating:89,special:'Billing / infra',winRate:'39%',activeDeals:'7',history:'Стабильный контур без споров',violations:'Нет',scoreFactors:{protection:90,speed:87,conflicts:88,decisions:90}}
+  ],
+  journal: [
+    '01.04 09:20 — роль пользователя изменена на "Партнер"',
+    '01.04 09:24 — открыта карточка регистрации WD-2026-00118',
+    '01.04 09:27 — инициирована процедура продления по WD-2026-00118',
+    '01.04 09:31 — открыт арбитражный кейс ARB-2026-0081',
+    '01.04 09:36 — просмотрен рейтинг вендора "Инферит ИТМен"',
+    '01.04 09:42 — открыт аналитический срез: сегмент "Финансы", класс "BI", период "Квартал"'
+  ],
+  marketSignals: [
+    {title:'В марте рост регистраций в финансовом секторе +32%', detail:'Основной вклад дали BI, Data Catalog и решения класса Discovery. Пик новых регистраций пришелся на последнюю неделю месяца.'},
+    {title:'Класс решений Discovery растет 18% на горизонте 6 месяцев', detail:'Наиболее выраженная динамика — в промышленности и энергетике, где формируется устойчивый спрос на инвентаризацию и контроль активов.'},
+    {title:'Промышленность показывает падение активности по ITSM на 12%', detail:'На фоне роста инфраструктурных и discovery-инициатив service management-проекты переходят в более длинный цикл.'}
+  ],
+  analytics: {
+    monthly: [64,72,79,85,96,104,117,121,130,138,145,156],
+    quarterly: [218,285,368,439],
+    yearly: [1310,1488,1672],
+    bySegment: [
+      {name:'Финансы', value:34},
+      {name:'Промышленность', value:28},
+      {name:'Госсектор', value:16},
+      {name:'Логистика', value:12},
+      {name:'Retail', value:10}
+    ],
+    byClass: [
+      {name:'Discovery', value:29},
+      {name:'BI', value:23},
+      {name:'FinOps', value:18},
+      {name:'ITSM', value:17},
+      {name:'Billing', value:13}
+    ],
+    insights: [
+      'Рост Discovery в промышленности фиксируется 6 месяцев подряд.',
+      'Снижение ITSM в фин секторе сохраняется второй квартал.',
+      'Пик регистрационной активности в Q2 ожидается по BI и FinOps.',
+      'Объем регистраций в классе Discovery превысил BI в конце квартала.',
+      'Госсектор сохраняет стабильный, но медленный рост без резких всплесков.'
+    ]
+  }
 };
 
-function $(sel){ return document.querySelector(sel); }
-function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
-function badgeClass(status){
-  const s = status.toLowerCase();
-  if(s.includes('актив') || s.includes('закрыто') || s.includes('эталон')) return 'ok';
-  if(s.includes('ожида') || s.includes('рассмотр') || s.includes('срочно')) return 'warn';
-  if(s.includes('спор') || s.includes('опас') || s.includes('наруш') || s.includes('под наблюд')) return 'danger';
-  if(s.includes('продл') || s.includes('решение') || s.includes('назначено')) return 'info';
-  return 'neutral';
+function el(id){ return document.getElementById(id); }
+function escapeHtml(v){ return String(v).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
+function statusClass(key){
+  if(key === 'active') return 'active';
+  if(key === 'waiting') return 'waiting';
+  if(key === 'dispute') return 'dispute';
+  return 'extend';
 }
-function tooltip(text){ return `<span class="tooltip" title="${escapeHtml(text)}">?</span>`; }
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function navLabel(section){
+  const map = {
+    summary:['Сводка','Операционная панель участника рынка'],
+    registry:['Реестр регистраций','Единый список зарегистрированных сделок и проектов'],
+    disputes:['Реестр споров','Контур рассмотрения жалоб, challenge и продлений'],
+    catalog:['Каталог участников','Вендоры и партнеры рынка с раскрытием карточек'],
+    ratings:['Рейтинги','Репутационный контур вендоров и партнеров'],
+    analytics:['Аналитика рынка','Обезличенные сигналы, динамика сегментов и классов решений'],
+    journal:['Журнал действий','Служебный протокол действий пользователя в системе']
+  };
+  return map[section] || ['Раздел',''];
+}
+
+function renderNav(){
+  const nav = el('nav');
+  const items = navConfig[state.role];
+  nav.innerHTML = `<div class="nav-group-title">Разделы</div>` + items.map(([id,label]) =>
+    `<button class="nav-item ${state.section===id?'active':''}" data-id="${id}"><span>${label}</span><span>›</span></button>`
+  ).join('');
+  nav.querySelectorAll('.nav-item').forEach(btn => btn.onclick = ()=> {
+    state.section = btn.dataset.id;
+    render();
+  });
+}
 
 function render(){
-  const [title, subtitle] = meta[appState.section];
-  $('#page-title').textContent = title;
-  $('#page-subtitle').textContent = subtitle;
-  renderSection();
-  syncButtons();
+  renderNav();
+  const [t, s] = navLabel(state.section);
+  el('pageTitle').textContent = t;
+  el('pageSubtitle').textContent = s;
+  if(state.section === 'summary') renderSummary();
+  if(state.section === 'registry') renderRegistry();
+  if(state.section === 'disputes') renderDisputes();
+  if(state.section === 'catalog') renderCatalog();
+  if(state.section === 'ratings') renderRatings();
+  if(state.section === 'analytics') renderAnalytics();
+  if(state.section === 'journal') renderJournal();
 }
 
-function syncButtons(){
-  $all('.role-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.role === appState.role));
-  $all('.nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.section === appState.section));
+function openDetail(html){
+  el('detailPane').innerHTML = html;
+  bindDetailActions();
+}
+function bindDetailActions(){
+  document.querySelectorAll('[data-open-modal]').forEach(btn => btn.onclick = ()=> openModal(btn.dataset.openModal, btn.dataset.entity || ''));
 }
 
-function renderSection(){
-  const root = $('#content');
-  if(appState.section === 'summary') root.innerHTML = renderSummary();
-  if(appState.section === 'registry') root.innerHTML = renderRegistry();
-  if(appState.section === 'disputes') root.innerHTML = renderDisputes();
-  if(appState.section === 'catalog-vendors') root.innerHTML = renderVendors();
-  if(appState.section === 'catalog-partners') root.innerHTML = renderPartners();
-  if(appState.section === 'ratings') root.innerHTML = renderRatings();
-  if(appState.section === 'analytics') root.innerHTML = renderAnalytics();
-  if(appState.section === 'history') root.innerHTML = renderHistory();
-  bindDynamic();
+function tooltip(text){
+  return `<span class="tooltip" data-tip="${escapeHtml(text)}">?</span>`;
 }
 
 function renderSummary(){
-  const data = datasets.summary[appState.role];
-  return `
-    <div class="stats-grid">
-      ${data.stats.map(s => `<div class="stat-card"><div class="stat-label">${s[0]}</div><div class="stat-value">${s[1]}</div><div class="stat-note">${s[2]}</div></div>`).join('')}
+  const roleTexts = {
+    partner: {
+      action1:'2 регистрации требуют продления',
+      action2:'1 спор в процессе',
+      action3:'3 новых входящих решения вендоров',
+      rep:'Рейтинг партнера: 93/100',
+      tableTitle:'Мои регистрации',
+      repBlock:'Репутационный статус партнера'
+    },
+    vendor: {
+      action1:'2 регистрации требуют решения',
+      action2:'1 спор в процессе',
+      action3:'3 новых входящих регистрации',
+      rep:'Рейтинг вендора: 91/100',
+      tableTitle:'Входящие регистрации',
+      repBlock:'Репутационный статус вендора'
+    },
+    arbitrage: {
+      action1:'2 кейса требуют ручной верификации',
+      action2:'1 спор с критичным SLA',
+      action3:'3 новых обращения за сутки',
+      rep:'Индекс соблюдения SLA: 94/100',
+      tableTitle:'Очередь рассмотрения',
+      repBlock:'Операционный статус арбитража'
+    },
+    market: {
+      action1:'3 заметных рыночных сигнала',
+      action2:'1 сегмент показывает отрицательную динамику',
+      action3:'3 новых аналитических вывода за период',
+      rep:'Рейтинг надежности рынка доступен по участникам',
+      tableTitle:'Последние обезличенные сигналы',
+      repBlock:'Общий статус прозрачности рынка'
+    }
+  }[state.role];
+
+  const rows = (state.role === 'market' ? data.marketSignals.map((s, i)=>({id:i+1,date:'Март 2026',partner:'—',vendor:'—',client:'—',subject:s.title,status:'Сигнал',statusKey:'extend',term:'—',risk:'—'})) : data.registrations.slice(0,5));
+  el('centerPane').innerHTML = `
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Требуют действий</div>
+          <div class="panel-subtitle">Приоритетные события, которые требуют перехода к реестрам и процедурным действиям.</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="kpi-list">
+          <div class="kpi-card link-card" data-go="registry"><div class="kpi-title">${tooltip('Количество объектов, по которым требуется продление защиты в пределах текущего SLA.')}Продления</div><div class="kpi-value">2</div><div class="kpi-note">${roleTexts.action1}</div></div>
+          <div class="kpi-card link-card" data-go="disputes"><div class="kpi-title">${tooltip('Открытые процедурные случаи: споры, challenge, апелляции, нарушения.')}Споры и оспаривания</div><div class="kpi-value">1</div><div class="kpi-note">${roleTexts.action2}</div></div>
+          <div class="kpi-card link-card" data-go="registry"><div class="kpi-title">${tooltip('Входящие новые элементы процесса: регистрации, решения, материалы, уведомления.')}Новые входящие</div><div class="kpi-value">3</div><div class="kpi-note">${roleTexts.action3}</div></div>
+          <div class="kpi-card link-card" data-go="ratings"><div class="kpi-title">${tooltip('Репутационный индекс рассчитывается по соблюдению защит, скорости решений, конфликтности и качеству решений.')}${roleTexts.repBlock}</div><div class="kpi-value">${roleTexts.rep.split(': ')[1] || roleTexts.rep}</div><div class="kpi-note">${roleTexts.rep}</div></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="panel-grid">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">${roleTexts.tableTitle}</div>
+            <div class="panel-subtitle">Список объектов со сжатыми сведениями и переходом в подробную карточку справа.</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          ${renderSimpleTable(rows)}
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Сигналы рынка</div>
+            <div class="panel-subtitle">Обезличенная сводка динамики сегментов и классов решений.</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="signal-list">
+            ${data.marketSignals.map((s,i)=>`<div class="signal-item" data-signal="${i}"><strong>${escapeHtml(s.title)}</strong><div class="small muted">${escapeHtml(s.detail)}</div></div>`).join('')}
+          </div>
+        </div>
+      </section>
     </div>
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-header"><div><div class="card-title">Требуют действий</div><div class="card-subtitle">Персонализированные уведомления по текущей роли</div></div></div>
-        <div class="card-body"><div class="notice-list">
-          ${data.notices.map((n,i)=>`<div class="notice-item row-click" data-notice="${i}"><span class="badge ${n.tag}">${n.title}</span><div style="margin-top:8px">${n.text}</div></div>`).join('')}
-        </div></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div><div class="card-title">Обезличенные сигналы рынка</div><div class="card-subtitle">Сводка по динамике сегментов и классов решений</div></div></div>
-        <div class="card-body"><div class="signal-grid">
-          ${data.signals.map((s,i)=>`<div class="signal row-click" data-signal="${i}"><div class="signal-title">Сигнал ${i+1}</div><div class="signal-note">${s}</div></div>`).join('')}
-        </div></div>
-      </div>
-    </div>`;
+  `;
+  document.querySelectorAll('.link-card').forEach(card=>card.onclick=()=>{state.section=card.dataset.go;render();});
+  bindSummaryRows(rows);
+  document.querySelectorAll('[data-signal]').forEach(node => node.onclick = ()=>{
+    const sig = data.marketSignals[Number(node.dataset.signal)];
+    openDetail(detailSignal(sig));
+  });
+}
+
+function renderSimpleTable(rows){
+  return `<div class="table-wrap"><table><thead><tr>
+    <th>№</th><th>Дата</th><th>Партнер</th><th>Вендор</th><th>Предмет</th><th>Статус</th>
+  </tr></thead><tbody>
+  ${rows.map((r, idx)=>`
+    <tr data-row="${idx}">
+      <td>${escapeHtml(r.id || idx+1)}</td>
+      <td>${escapeHtml(r.date || '—')}</td>
+      <td>${escapeHtml(r.partner || '—')}</td>
+      <td>${escapeHtml(r.vendor || '—')}</td>
+      <td>${escapeHtml(r.subject || r.title)}</td>
+      <td>${r.statusKey ? `<span class="status ${statusClass(r.statusKey)}">${escapeHtml(r.status)}</span>` : escapeHtml(r.status || '—')}</td>
+    </tr>`).join('')}
+  </tbody></table></div>`;
+}
+function bindSummaryRows(rows){
+  document.querySelectorAll('[data-row]').forEach(tr=>tr.onclick=()=>{
+    const row = rows[Number(tr.dataset.row)];
+    if(row.id && String(row.id).startsWith('WD-')) openDetail(detailRegistration(row));
+    else if(row.title) openDetail(detailSignal(row));
+  });
 }
 
 function renderRegistry(){
-  return `
-  <div class="table-wrap">
-    <div class="table-header">
-      <div><div class="card-title">Реестр регистраций</div><div class="card-subtitle">Сделки, проекты, статусы, сроки и риски</div></div>
-      <div class="toolbar">
-        <select><option>Все статусы</option><option>Активна</option><option>Ожидает решения</option><option>Требует продления</option><option>Спор</option></select>
-        <select><option>Все сегменты</option><option>Финансы</option><option>Промышленность</option><option>Энергетика</option><option>Логистика</option></select>
-        <select><option>Все классы решений</option><option>ITSM</option><option>Discovery</option><option>BI</option><option>FinOps</option><option>ITAM / CMDB</option></select>
+  let rows = [...data.registrations];
+  const search = el('globalSearch').value.trim().toLowerCase();
+  if(search){
+    rows = rows.filter(r => Object.values(r).join(' ').toLowerCase().includes(search));
+  }
+  const f = state.filters;
+  if(f.registryStatus) rows = rows.filter(r => r.status === f.registryStatus);
+  if(f.registrySegment) rows = rows.filter(r => r.segment === f.registrySegment);
+  if(f.registryClass) rows = rows.filter(r => r.class === f.registryClass);
+
+  el('centerPane').innerHTML = `
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Реестр регистраций</div>
+          <div class="panel-subtitle">Основной список зарегистрированных сделок и проектов. Клик по строке открывает карточку справа без перехода на отдельный экран.</div>
+        </div>
+        <div class="split-actions">
+          <button class="button" id="newRegBtn">Новая регистрация</button>
+        </div>
       </div>
-    </div>
-    <div class="table-scroll"><table>
-      <thead><tr><th>№</th><th>Дата</th><th>Партнер</th><th>Вендор</th><th>Клиент</th><th>Предмет</th><th>Статус</th><th>Срок</th><th>Риск</th></tr></thead>
-      <tbody>
-        ${datasets.registrations.map((r,i)=>`<tr class="row-click" data-reg="${i}"><td>${r.id}</td><td>${r.date}</td><td>${r.partner}</td><td>${r.vendor}</td><td>${r.client}</td><td>${r.subject}</td><td><span class="badge ${r.statusClass}">${r.status}</span></td><td>${r.until}</td><td>${r.risk}</td></tr>`).join('')}
-      </tbody>
-    </table></div>
-  </div>`;
+      <div class="panel-body">
+        <div class="table-toolbar">
+          <select class="filter-select" id="registryStatusFilter">
+            <option value="">Статус: все</option>
+            <option ${f.registryStatus==='Активна'?'selected':''}>Активна</option>
+            <option ${f.registryStatus==='Ожидает'?'selected':''}>Ожидает</option>
+            <option ${f.registryStatus==='Продление'?'selected':''}>Продление</option>
+            <option ${f.registryStatus==='Спор'?'selected':''}>Спор</option>
+            <option ${f.registryStatus==='Выиграна'?'selected':''}>Выиграна</option>
+          </select>
+          <select class="filter-select" id="registrySegmentFilter">
+            <option value="">Сегмент: все</option>
+            ${[...new Set(data.registrations.map(r=>r.segment))].map(s=>`<option ${f.registrySegment===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+          <select class="filter-select" id="registryClassFilter">
+            <option value="">Класс решений: все</option>
+            ${[...new Set(data.registrations.map(r=>r.class))].map(s=>`<option ${f.registryClass===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+          <span class="muted small">Риск ${tooltip('Риск рассчитывается по конфликтности, полноте материалов, наличию challenge и активности вендора/партнера.')}</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>№</th><th>Дата</th><th>Партнер</th><th>Вендор</th><th>Клиент</th><th>Предмет</th><th>Статус</th><th>Срок</th><th>Риск</th><th>Действия</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((r,idx)=>`
+                <tr data-reg="${r.id}">
+                  <td>${escapeHtml(r.id)}</td>
+                  <td>${escapeHtml(r.date)}</td>
+                  <td>${escapeHtml(r.partner)}</td>
+                  <td>${escapeHtml(r.vendor)}</td>
+                  <td>${escapeHtml(r.client)}</td>
+                  <td>${escapeHtml(r.subject)}</td>
+                  <td><span class="status ${statusClass(r.statusKey)}">${escapeHtml(r.status)}</span></td>
+                  <td>${escapeHtml(r.term)}</td>
+                  <td>${escapeHtml(r.risk)}</td>
+                  <td><span class="linklike" data-row-action="${r.id}">Открыть</span></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  `;
+  el('registryStatusFilter').onchange = e => { state.filters.registryStatus = e.target.value; renderRegistry(); };
+  el('registrySegmentFilter').onchange = e => { state.filters.registrySegment = e.target.value; renderRegistry(); };
+  el('registryClassFilter').onchange = e => { state.filters.registryClass = e.target.value; renderRegistry(); };
+  document.querySelectorAll('[data-reg]').forEach(row => row.onclick = ()=> {
+    const rec = data.registrations.find(r=>r.id===row.dataset.reg);
+    openDetail(detailRegistration(rec));
+  });
+  document.querySelectorAll('[data-row-action]').forEach(a => a.onclick = (e)=> {
+    e.stopPropagation();
+    const rec = data.registrations.find(r=>r.id===a.dataset.rowAction);
+    openDetail(detailRegistration(rec));
+  });
+  el('newRegBtn').onclick = ()=> openModal('newRegistration');
 }
 
 function renderDisputes(){
-  return `
-  <div class="table-wrap">
-    <div class="table-header">
-      <div><div class="card-title">Реестр споров</div><div class="card-subtitle">Оспаривание регистраций, отказов, продлений и нарушений</div></div>
-      <div class="toolbar">
-        <select><option>Все уровни</option><option>Уровень 1</option><option>Уровень 2</option><option>Уровень 3</option></select>
-        <select><option>Все статусы</option><option>В рассмотрении</option><option>Назначено решение</option><option>Закрыто</option></select>
+  const rows = [...data.disputes];
+  el('centerPane').innerHTML = `
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Реестр споров</div>
+          <div class="panel-subtitle">Контур жалоб, challenge, продлений, нарушений и апелляций. Карточка открывается в правой панели.</div>
+        </div>
       </div>
-    </div>
-    <div class="table-scroll"><table>
-      <thead><tr><th>№</th><th>Сделка</th><th>Тип</th><th>Заявитель</th><th>Уровень</th><th>Статус</th><th>SLA</th></tr></thead>
-      <tbody>
-        ${datasets.disputes.map((d,i)=>`<tr class="row-click" data-dispute="${i}"><td>${d.id}</td><td>${d.deal}</td><td>${d.type}</td><td>${d.complainant}</td><td>${d.level}</td><td><span class="badge ${d.statusClass}">${d.status}</span></td><td>${d.sla}</td></tr>`).join('')}
-      </tbody>
-    </table></div>
-  </div>`;
+      <div class="panel-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>№</th><th>Сделка</th><th>Тип</th><th>Стороны</th><th>Уровень</th><th>Статус</th><th>SLA</th><th>Действие</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(d=>`
+                <tr data-dispute="${d.id}">
+                  <td>${escapeHtml(d.id)}</td>
+                  <td>${escapeHtml(d.deal)}</td>
+                  <td>${escapeHtml(d.type)}</td>
+                  <td>${escapeHtml(d.parties)}</td>
+                  <td>${escapeHtml(d.level)}</td>
+                  <td><span class="status ${statusClass(d.statusKey)}">${escapeHtml(d.status)}</span></td>
+                  <td>${escapeHtml(d.sla)}</td>
+                  <td><span class="linklike" data-dispute-action="${d.id}">Открыть</span></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  `;
+  document.querySelectorAll('[data-dispute]').forEach(row=>row.onclick=()=>{
+    const item = data.disputes.find(d=>d.id===row.dataset.dispute);
+    openDetail(detailDispute(item));
+  });
+  document.querySelectorAll('[data-dispute-action]').forEach(a=>a.onclick=(e)=>{
+    e.stopPropagation();
+    const item = data.disputes.find(d=>d.id===a.dataset.disputeAction);
+    openDetail(detailDispute(item));
+  });
 }
 
-function renderVendors(){
-  return `
-  <div class="table-wrap">
-    <div class="table-header">
-      <div><div class="card-title">Каталог вендоров</div><div class="card-subtitle">Выбор по рейтингу, активности, классу решений и качеству поведения</div></div>
-      <div class="toolbar">
-        <select><option>Все категории</option><option>ITSM</option><option>FinOps</option><option>BI</option><option>ITAM / CMDB</option></select>
-        <select><option>Все сегменты</option><option>Enterprise IT</option><option>Infrastructure</option><option>Data Platforms</option></select>
+function renderCatalog(){
+  const tab = state.filters.catalogTab;
+  const table = tab === 'vendors' ? `
+    <table><thead><tr><th>Название</th><th>Рейтинг</th><th>Категория</th><th>Активность</th><th>Споры</th></tr></thead>
+    <tbody>${data.vendors.map(v=>`<tr data-vendor="${v.name}"><td>${escapeHtml(v.name)}</td><td>${v.rating}/100</td><td>${escapeHtml(v.category)}</td><td>${escapeHtml(v.activity)}</td><td>${escapeHtml(v.disputes)}</td></tr>`).join('')}</tbody></table>
+  ` : `
+    <table><thead><tr><th>Название</th><th>Рейтинг</th><th>Специализация</th><th>Win-rate</th><th>Активные сделки</th></tr></thead>
+    <tbody>${data.partners.map(v=>`<tr data-partner="${v.name}"><td>${escapeHtml(v.name)}</td><td>${v.rating}/100</td><td>${escapeHtml(v.special)}</td><td>${escapeHtml(v.winRate)}</td><td>${escapeHtml(v.activeDeals)}</td></tr>`).join('')}</tbody></table>
+  `;
+  el('centerPane').innerHTML = `
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Каталог участников</div>
+          <div class="panel-subtitle">Единый каталог вендоров и партнеров с раскрытием карточки участника и репутационного профиля.</div>
+        </div>
       </div>
-    </div>
-    <div class="table-scroll"><table>
-      <thead><tr><th>Вендор</th><th>Категория</th><th>Сегмент</th><th>Рейтинг</th><th>Активные регистрации</th><th>Споры</th><th>Статус доверия</th></tr></thead>
-      <tbody>
-        ${datasets.vendors.map((v,i)=>`<tr class="row-click" data-vendor="${i}"><td>${v.name}</td><td>${v.category}</td><td>${v.segment}</td><td>${v.rating}/100</td><td>${v.active}</td><td>${v.disputes}</td><td><span class="badge ${badgeClass(v.trust)}">${v.trust}</span></td></tr>`).join('')}
-      </tbody>
-    </table></div>
-  </div>`;
-}
-
-function renderPartners(){
-  return `
-  <div class="table-wrap">
-    <div class="table-header">
-      <div><div class="card-title">Каталог партнеров</div><div class="card-subtitle">Выбор по специализации, результативности и дисциплине работы в системе</div></div>
-      <div class="toolbar">
-        <select><option>Все специализации</option><option>Enterprise infra</option><option>Cloud</option><option>ITSM</option><option>Discovery</option></select>
-        <select><option>Все tiers</option><option>Platinum</option><option>Gold</option><option>Silver</option></select>
+      <div class="panel-body">
+        <div class="tabs">
+          <button class="tab ${tab==='vendors'?'active':''}" id="vendorsTab">Вендоры</button>
+          <button class="tab ${tab==='partners'?'active':''}" id="partnersTab">Партнеры</button>
+        </div>
+        <div class="table-wrap">${table}</div>
       </div>
-    </div>
-    <div class="table-scroll"><table>
-      <thead><tr><th>Партнер</th><th>Специализация</th><th>Tier</th><th>Рейтинг</th><th>Win-rate</th><th>Активные регистрации</th><th>Споры</th></tr></thead>
-      <tbody>
-        ${datasets.partners.map((p,i)=>`<tr class="row-click" data-partner="${i}"><td>${p.name}</td><td>${p.specialization}</td><td>${p.tier}</td><td>${p.rating}/100</td><td>${p.winRate}</td><td>${p.active}</td><td>${p.disputes}</td></tr>`).join('')}
-      </tbody>
-    </table></div>
-  </div>`;
+    </section>
+  `;
+  el('vendorsTab').onclick = ()=>{state.filters.catalogTab='vendors';renderCatalog();};
+  el('partnersTab').onclick = ()=>{state.filters.catalogTab='partners';renderCatalog();};
+  document.querySelectorAll('[data-vendor]').forEach(r=>r.onclick=()=>{
+    const item=data.vendors.find(v=>v.name===r.dataset.vendor); openDetail(detailParticipant(item,'vendor'));
+  });
+  document.querySelectorAll('[data-partner]').forEach(r=>r.onclick=()=>{
+    const item=data.partners.find(v=>v.name===r.dataset.partner); openDetail(detailParticipant(item,'partner'));
+  });
 }
 
 function renderRatings(){
-  return `
-    <div class="tabs">
-      <button class="tab-btn active" data-ratingtab="vendors">Рейтинг вендоров</button>
-      <button class="tab-btn" data-ratingtab="partners">Рейтинг партнеров</button>
-    </div>
-    <div id="ratings-wrap">${ratingsTable('vendors')}</div>`;
+  const tab = state.filters.ratingsTab;
+  const list = tab === 'vendors' ? data.vendors : data.partners;
+  const table = `
+    <table><thead><tr><th>Участник</th><th>Итог</th><th>Соблюдение защит ${tooltip('Насколько участник соблюдает режим зарегистрированных защит и не нарушает приоритеты.')}</th><th>Скорость ${tooltip('Скорость реакции на процедуру: подтверждение, ответ, завершение, мотивировка.')}</th><th>Конфликты ${tooltip('Частота и тяжесть конфликтных кейсов и challenge.')}</th><th>Решения ${tooltip('Качество и прозрачность вынесенных решений или поведения в рамках процесса.')}</th></tr></thead>
+    <tbody>${list.map(i=>`<tr data-rate="${i.name}" data-kind="${tab.slice(0,-1)}"><td>${escapeHtml(i.name)}</td><td>${i.rating}/100</td><td>${i.scoreFactors.protection}</td><td>${i.scoreFactors.speed}</td><td>${i.scoreFactors.conflicts}</td><td>${i.scoreFactors.decisions}</td></tr>`).join('')}</tbody></table>`;
+  el('centerPane').innerHTML = `
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Рейтинги</div>
+          <div class="panel-subtitle">Отдельный репутационный контур вендоров и партнеров с факторами расчета и историей изменений.</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="tabs">
+          <button class="tab ${tab==='vendors'?'active':''}" id="ratingsVendorsTab">Вендоры</button>
+          <button class="tab ${tab==='partners'?'active':''}" id="ratingsPartnersTab">Партнеры</button>
+        </div>
+        <div class="table-wrap">${table}</div>
+      </div>
+    </section>
+  `;
+  el('ratingsVendorsTab').onclick = ()=>{state.filters.ratingsTab='vendors';renderRatings();};
+  el('ratingsPartnersTab').onclick = ()=>{state.filters.ratingsTab='partners';renderRatings();};
+  document.querySelectorAll('[data-rate]').forEach(r=>r.onclick=()=>{
+    const kind = r.dataset.kind;
+    const item = kind === 'vendor' ? data.vendors.find(v=>v.name===r.dataset.rate) : data.partners.find(v=>v.name===r.dataset.rate);
+    openDetail(detailRating(item, kind));
+  });
 }
-function ratingsTable(type){
-  if(type === 'vendors'){
-    return `<div class="dual">
-      <div class="table-wrap"><div class="table-header"><div><div class="card-title">Рейтинг вендоров</div><div class="card-subtitle">Оценивается прозрачность, скорость решений, конфликтность, соблюдение защит ${tooltip('Рейтинг вендора складывается из прозрачности решений, доли соблюденных защит, скорости реакции и частоты подтвержденных нарушений.')}</div></div></div><div class="table-scroll"><table><thead><tr><th>Вендор</th><th>Итог</th><th>Прозрачность</th><th>Скорость</th><th>Споры</th></tr></thead><tbody>${datasets.vendors.map((v,i)=>`<tr class="row-click" data-vendor="${i}"><td>${v.name}</td><td>${v.rating}/100</td><td>${v.transparency}</td><td>${v.speed}</td><td>${v.disputes}</td></tr>`).join('')}</tbody></table></div></div>
-      <div class="right-box"><div class="card-header"><div><div class="card-title">Методика расчета</div><div class="card-subtitle">Как формируется репутация вендора</div></div></div><div class="card-body metric-list"><div class="metric-row"><span>Соблюдение защит</span><strong>35%</strong></div><div class="metric-row"><span>Прозрачность решений</span><strong>25%</strong></div><div class="metric-row"><span>Скорость реакции</span><strong>20%</strong></div><div class="metric-row"><span>Подтвержденные нарушения</span><strong>20%</strong></div></div></div>
-    </div>`;
-  }
-  return `<div class="dual">
-    <div class="table-wrap"><div class="table-header"><div><div class="card-title">Рейтинг партнеров</div><div class="card-subtitle">Оценивается полнота материалов, дисциплина продлений, качество поведения в спорах ${tooltip('Рейтинг партнера зависит от качества подаваемых регистраций, дисциплины продлений, подтвержденной активности и доли обоснованных споров.')}</div></div></div><div class="table-scroll"><table><thead><tr><th>Партнер</th><th>Итог</th><th>Win-rate</th><th>Активные</th><th>Споры</th></tr></thead><tbody>${datasets.partners.map((p,i)=>`<tr class="row-click" data-partner="${i}"><td>${p.name}</td><td>${p.rating}/100</td><td>${p.winRate}</td><td>${p.active}</td><td>${p.disputes}</td></tr>`).join('')}</tbody></table></div></div>
-    <div class="right-box"><div class="card-header"><div><div class="card-title">Методика расчета</div><div class="card-subtitle">Как формируется репутация партнера</div></div></div><div class="card-body metric-list"><div class="metric-row"><span>Качество материалов</span><strong>30%</strong></div><div class="metric-row"><span>Подтвержденная активность</span><strong>25%</strong></div><div class="metric-row"><span>Дисциплина продлений</span><strong>20%</strong></div><div class="metric-row"><span>Поведение в спорах</span><strong>25%</strong></div></div></div>
-  </div>`;
+
+function lineSvg(points, width=520, height=180){
+  const max = Math.max(...points), min = Math.min(...points);
+  const step = width / (points.length - 1 || 1);
+  const path = points.map((p,i)=>{
+    const x = i*step;
+    const y = height - ((p-min)/(max-min||1))* (height-20) - 10;
+    return `${i===0?'M':'L'}${x},${y}`;
+  }).join(' ');
+  return `<svg width="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="height:180px;border:1px solid var(--line);background:#fff">
+    <path d="${path}" fill="none" stroke="#1E3A8A" stroke-width="2"/>
+  </svg>`;
 }
 
 function renderAnalytics(){
-  const cards = datasets.marketSignals;
-  return `
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card-header"><div><div class="card-title">Параметры аналитики</div><div class="card-subtitle">Выбор сегмента, класса решений и периода для обезличенного анализа рынка</div></div></div>
-      <div class="card-body">
-        <div class="toolbar">
-          <select><option>Сегмент: все</option><option>Финансы</option><option>Промышленность</option><option>Энергетика</option><option>Госсектор</option></select>
-          <select><option>Класс решений: все</option><option>Discovery</option><option>ITSM</option><option>BI</option><option>ITAM / CMDB</option><option>FinOps</option></select>
-          <select><option>Период: 6 месяцев</option><option>1 месяц</option><option>1 квартал</option><option>1 год</option></select>
+  const period = state.filters.analyticsPeriod;
+  const series = period === 'month' ? data.analytics.monthly : period === 'quarter' ? data.analytics.quarterly : data.analytics.yearly;
+  const labels = period === 'month' ? ['Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек','Янв','Фев','Мар'] : period === 'quarter' ? ['Q1','Q2','Q3','Q4'] : ['2024','2025','2026'];
+  const growth = Math.round(((series[series.length-1]-series[0])/(series[0]||1))*100);
+  el('centerPane').innerHTML = `
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Аналитика рынка</div>
+          <div class="panel-subtitle">Обезличенный аналитический слой без клиентов и компаний: динамика, распределение, срезы сегментов и классов решений.</div>
         </div>
       </div>
-    </div>
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-header"><div><div class="card-title">Обезличенные рыночные сигналы</div><div class="card-subtitle">Никаких компаний, клиентов и сделок — только агрегированная динамика</div></div></div>
-        <div class="card-body signal-grid">${cards.map((c,i)=>`<div class="signal row-click" data-market="${i}"><div class="signal-title">${c.title}</div><div class="signal-note">${c.text}</div><div class="small" style="margin-top:8px;">Стратегический эффект: ${c.impact}</div></div>`).join('')}</div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div><div class="card-title">Динамика регистраций</div><div class="card-subtitle">Пример обезличенной визуализации по выбранному классу решений</div></div></div>
-        <div class="card-body">
+      <div class="panel-body">
+        <div class="table-toolbar">
+          <select class="filter-select" id="analyticsSegment"><option value="all">Сегмент: все</option><option ${state.filters.analyticsSegment==='Финансы'?'selected':''}>Финансы</option><option ${state.filters.analyticsSegment==='Промышленность'?'selected':''}>Промышленность</option><option ${state.filters.analyticsSegment==='Госсектор'?'selected':''}>Госсектор</option></select>
+          <select class="filter-select" id="analyticsClass"><option value="all">Класс: все</option><option ${state.filters.analyticsClass==='ITSM'?'selected':''}>ITSM</option><option ${state.filters.analyticsClass==='Discovery'?'selected':''}>Discovery</option><option ${state.filters.analyticsClass==='FinOps'?'selected':''}>FinOps</option><option ${state.filters.analyticsClass==='BI'?'selected':''}>BI</option></select>
+          <select class="filter-select" id="analyticsPeriod"><option value="month" ${period==='month'?'selected':''}>Месяц</option><option value="quarter" ${period==='quarter'?'selected':''}>Квартал</option><option value="year" ${period==='year'?'selected':''}>Год</option></select>
+        </div>
+
+        <div class="metric-strip">
+          <div class="kpi-card"><div class="kpi-title">Динамика регистраций ${tooltip('Показывает общий объем новых регистраций без раскрытия конкретных участников рынка.')}</div><div class="kpi-value">${series[series.length-1]}</div><div class="kpi-note">Текущее значение периода</div></div>
+          <div class="kpi-card"><div class="kpi-title">Рост / падение</div><div class="kpi-value">${growth > 0 ? '+' : ''}${growth}%</div><div class="kpi-note">Относительно начала выбранного периода</div></div>
+          <div class="kpi-card"><div class="kpi-title">Объем наблюдаемого рынка</div><div class="kpi-value">156</div><div class="kpi-note">Условный индекс объема по текущему срезу</div></div>
+        </div>
+
+        <div class="analytics-grid">
           <div class="chart-box">
-            <div class="small">Пример: Discovery / промышленность / 6 месяцев</div>
-            <div class="bars">
-              ${[22,24,29,35,41,47].map((v,i)=>`<div class="bar-col"><div class="bar" style="height:${v*2.4}px"></div><div class="small">M${i+1}</div><div class="small">${v}</div></div>`).join('')}
-            </div>
+            <div class="chart-title">Динамика регистраций</div>
+            <div class="chart-note">Линейная динамика выбранного периода; отображает только агрегированные значения.</div>
+            ${lineSvg(series)}
+            <div class="legend">${labels.map(l=>`<span>${l}</span>`).join('')}</div>
+          </div>
+
+          <div class="chart-box">
+            <div class="chart-title">Распределение по сегментам</div>
+            <div class="chart-note">Сводка долей в общем объеме наблюдаемой активности.</div>
+            ${data.analytics.bySegment.map(s=>`<div class="bar-row"><div>${escapeHtml(s.name)}</div><div class="bar"><div class="bar-fill" style="width:${s.value}%"></div></div><div>${s.value}%</div></div>`).join('')}
+          </div>
+        </div>
+
+        <div class="analytics-grid" style="margin-top:16px;">
+          <div class="chart-box">
+            <div class="chart-title">Распределение по классам решений</div>
+            <div class="chart-note">Срез спроса по типам решений и регистрационной активности.</div>
+            ${data.analytics.byClass.map(s=>`<div class="bar-row"><div>${escapeHtml(s.name)}</div><div class="bar"><div class="bar-fill" style="width:${s.value}%"></div></div><div>${s.value}%</div></div>`).join('')}
+          </div>
+          <div class="chart-box">
+            <div class="chart-title">Обезличенные инсайты</div>
+            <div class="chart-note">Выводы для оценки объема рынка, триггеров и стратегических решений.</div>
+            ${data.analytics.insights.map(i=>`<div class="insight">${escapeHtml(i)}</div>`).join('')}
           </div>
         </div>
       </div>
-    </div>`;
-}
-
-function renderHistory(){
-  return `
-    <div class="table-wrap"><div class="table-header"><div><div class="card-title">Журнал действий</div><div class="card-subtitle">Процедурные и пользовательские действия в системе</div></div></div>
-    <div class="table-scroll"><table><thead><tr><th>Дата и время</th><th>Источник</th><th>Событие</th></tr></thead><tbody>
-      ${datasets.history.map(h=>`<tr><td>${h[0]}</td><td>${h[1]}</td><td>${h[2]}</td></tr>`).join('')}
-    </tbody></table></div></div>`;
-}
-
-function renderRegisterFlow(){
-  const f = appState.registerForm;
-  const step = appState.modalStep;
-  $('#modal-title').textContent = 'Процедура регистрации сделки / проекта';
-  $('#modal-subtitle').textContent = 'Форма без бэка, но с полноценной сквозной логикой для демонстрации';
-  $('#modal-body').innerHTML = `
-    <div class="stepper">
-      <div class="step ${step===1?'active':''}">1. Основные сведения</div>
-      <div class="step ${step===2?'active':''}">2. Параметры сделки</div>
-      <div class="step ${step===3?'active':''}">3. Подтверждающие материалы</div>
-      <div class="step ${step===4?'active':''}">4. Проверка и отправка</div>
-    </div>
-    ${step===1 ? `
-      <div class="form-grid">
-        <div class="form-row"><label class="label">Тип регистрации ${tooltip('В рамках системы можно регистрировать как короткую сделку, так и длительный проект.')}</label><select id="f-type"><option ${f.type==='Проект'?'selected':''}>Проект</option><option ${f.type==='Сделка'?'selected':''}>Сделка</option></select></div>
-        <div class="form-row"><label class="label">Вендор</label><select id="f-vendor">${datasets.vendors.map(v=>`<option ${f.vendor===v.name?'selected':''}>${v.name}</option>`).join('')}</select></div>
-        <div class="form-row full"><label class="label">Предмет регистрации</label><input class="field" id="f-title" value="${escapeHtml(f.title)}"></div>
-        <div class="form-row"><label class="label">Компания клиента</label><input class="field" id="f-client" value="${escapeHtml(f.client)}"></div>
-        <div class="form-row"><label class="label">ИНН / идентификатор клиента ${tooltip('Клиент раскрывается вендору и системе, но не рынку.')}</label><input class="field" id="f-inn" value="${escapeHtml(f.inn)}"></div>
-      </div>` : ''}
-    ${step===2 ? `
-      <div class="form-grid">
-        <div class="form-row"><label class="label">Сегмент</label><select id="f-segment"><option ${f.segment==='Финансы'?'selected':''}>Финансы</option><option ${f.segment==='Промышленность'?'selected':''}>Промышленность</option><option ${f.segment==='Энергетика'?'selected':''}>Энергетика</option><option ${f.segment==='Логистика'?'selected':''}>Логистика</option></select></div>
-        <div class="form-row"><label class="label">Класс решений</label><select id="f-class"><option ${f.solutionClass==='ITAM / CMDB'?'selected':''}>ITAM / CMDB</option><option>ITSM</option><option>Discovery</option><option>BI / Data Catalog</option><option>FinOps</option></select></div>
-        <div class="form-row"><label class="label">Плановая сумма</label><input class="field" id="f-amount" value="${escapeHtml(f.amount)}"></div>
-        <div class="form-row"><label class="label">Плановая дата закрытия</label><input class="field" id="f-close" value="${escapeHtml(f.closeDate)}"></div>
-        <div class="form-row full"><label class="label">Описание проекта ${tooltip('Используется в машинной проверке, определении класса решений и поиске возможных дублей.')}</label><textarea id="f-description" rows="6">${escapeHtml(f.description)}</textarea></div>
-      </div>` : ''}
-    ${step===3 ? `
-      <div class="form-grid">
-        <div class="form-row full"><label class="label">Основание для регистрации</label><textarea id="f-basis" rows="5">${escapeHtml(f.basis)}</textarea></div>
-        <div class="form-row full"><label class="label">Подтверждающие материалы ${tooltip('Вместо абстрактного текста рекомендуется прикладывать сущности: встречи, КП, пилоты, подтвержденные контакты.')}</label><textarea id="f-evidence" rows="6">${escapeHtml(f.evidence)}</textarea></div>
-      </div>
-      <div class="card" style="margin-top:16px;"><div class="card-body"><strong>Предварительная машинная оценка:</strong><div class="metric-list" style="margin-top:10px"><div class="metric-row"><span>Полнота данных</span><strong>91/100</strong></div><div class="metric-row"><span>Вероятность дубля</span><strong>Низкая</strong></div><div class="metric-row"><span>Рекомендация</span><strong>Передать вендору на рассмотрение</strong></div></div></div></div>` : ''}
-    ${step===4 ? `
-      <div class="dual">
-        <div class="card"><div class="card-header"><div><div class="card-title">Сводка по регистрации</div><div class="card-subtitle">Финальная проверка перед отправкой</div></div></div><div class="card-body">
-          <div class="kv"><div class="kv-key">Тип</div><div>${f.type}</div></div>
-          <div class="kv"><div class="kv-key">Вендор</div><div>${f.vendor}</div></div>
-          <div class="kv"><div class="kv-key">Клиент</div><div>${f.client}</div></div>
-          <div class="kv"><div class="kv-key">Сегмент</div><div>${f.segment}</div></div>
-          <div class="kv"><div class="kv-key">Класс решений</div><div>${f.solutionClass}</div></div>
-          <div class="kv"><div class="kv-key">Сумма</div><div>${f.amount}</div></div>
-          <div class="kv"><div class="kv-key">Срок закрытия</div><div>${f.closeDate}</div></div>
-        </div></div>
-        <div class="card"><div class="card-header"><div><div class="card-title">Что произойдет дальше</div><div class="card-subtitle">Процедурная логика системы</div></div></div><div class="card-body"><div class="metric-list"><div class="metric-row"><span>1. Машинная проверка</span><strong>до 5 минут</strong></div><div class="metric-row"><span>2. Передача вендору</span><strong>после валидации</strong></div><div class="metric-row"><span>3. Решение вендора</span><strong>до 1 дня</strong></div><div class="metric-row"><span>4. При необходимости — оспаривание</span><strong>через арбитраж</strong></div></div></div></div>
-      </div>` : ''}
+    </section>
   `;
-  $('#modal-footer').innerHTML = `
-    <div><button class="ghost-btn" id="modal-prev" ${step===1?'disabled':''}>Назад</button></div>
-    <div>${step<4 ? '<button class="primary-btn" id="modal-next">Далее</button>' : '<button class="primary-btn" id="modal-submit">Отправить на регистрацию</button>'}</div>`;
-  bindModalForm();
+  el('analyticsSegment').onchange = e=>{state.filters.analyticsSegment=e.target.value; renderAnalytics();};
+  el('analyticsClass').onchange = e=>{state.filters.analyticsClass=e.target.value; renderAnalytics();};
+  el('analyticsPeriod').onchange = e=>{state.filters.analyticsPeriod=e.target.value; renderAnalytics();};
 }
 
-function openModal(){ $('#modal').classList.remove('hidden'); }
-function closeModal(){ $('#modal').classList.add('hidden'); appState.modalStep = 1; }
+function renderJournal(){
+  el('centerPane').innerHTML = `
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Журнал действий</div>
+          <div class="panel-subtitle">Служебный протокол пользовательских и системных действий в рамках демонстрационного контура.</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="journal-list">
+          ${data.journal.map(x=>`<div class="journal-item">${escapeHtml(x)}</div>`).join('')}
+        </div>
+      </div>
+    </section>
+  `;
+}
 
-function bindModalForm(){
-  const bind = (id,key)=>{ const el = document.getElementById(id); if(el) el.oninput = ()=> appState.registerForm[key] = el.value; };
-  bind('f-title','title'); bind('f-client','client'); bind('f-inn','inn'); bind('f-amount','amount'); bind('f-close','closeDate'); bind('f-description','description'); bind('f-basis','basis'); bind('f-evidence','evidence');
-  const type = document.getElementById('f-type'); if(type) type.onchange = ()=> appState.registerForm.type = type.value;
-  const vendor = document.getElementById('f-vendor'); if(vendor) vendor.onchange = ()=> appState.registerForm.vendor = vendor.value;
-  const seg = document.getElementById('f-segment'); if(seg) seg.onchange = ()=> appState.registerForm.segment = seg.value;
-  const cls = document.getElementById('f-class'); if(cls) cls.onchange = ()=> appState.registerForm.solutionClass = cls.value;
-  const prev = document.getElementById('modal-prev'); if(prev) prev.onclick = ()=>{ appState.modalStep--; renderRegisterFlow(); };
-  const next = document.getElementById('modal-next'); if(next) next.onclick = ()=>{ appState.modalStep++; renderRegisterFlow(); };
-  const submit = document.getElementById('modal-submit'); if(submit) submit.onclick = ()=> {
-    $('#modal-title').textContent = 'Регистрация создана';
-    $('#modal-subtitle').textContent = 'Система показывает следующий реалистичный шаг без сохранения данных';
-    $('#modal-body').innerHTML = `<div class="card"><div class="card-body"><div class="kv"><div class="kv-key">Номер регистрации</div><div>DR-2026-00131</div></div><div class="kv"><div class="kv-key">Статус</div><div><span class="badge warn">Ожидает решения вендора</span></div></div><div class="kv"><div class="kv-key">Машинная оценка</div><div>91/100</div></div><div class="kv"><div class="kv-key">Комментарий системы</div><div>Регистрация признана валидной и направлена вендору на рассмотрение.</div></div></div></div>`;
-    $('#modal-footer').innerHTML = '<div></div><div><button class="primary-btn" id="close-success">Понятно</button></div>';
-    document.getElementById('close-success').onclick = closeModal;
+function detailRegistration(r){
+  return `
+    <div class="detail-title">Карточка регистрации</div>
+    <div class="detail-subtitle">${escapeHtml(r.id)} · ${escapeHtml(r.subject)}</div>
+
+    <div class="section">
+      <div class="section-title">1. Статус ${tooltip('Статус жизненного цикла регистрации: активна, ожидает, спор, продление, выиграна, проиграна, отменена.')}</div>
+      <div><span class="status ${statusClass(r.statusKey)}">${escapeHtml(r.status)}</span> <span class="badge">${escapeHtml(r.lifecycle)}</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">2. Основные сведения</div>
+      <div class="definition-list">
+        <div>Партнер</div><div>${escapeHtml(r.partner)}</div>
+        <div>Вендор</div><div>${escapeHtml(r.vendor)}</div>
+        <div>Клиент</div><div>${escapeHtml(r.client)}</div>
+        <div>Предмет</div><div>${escapeHtml(r.subject)}</div>
+        <div>Сумма</div><div>${escapeHtml(r.amount)}</div>
+        <div>Сегмент</div><div>${escapeHtml(r.segment)}</div>
+        <div>Класс решений</div><div>${escapeHtml(r.class)}</div>
+        <div>Риск</div><div>${escapeHtml(r.risk)}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">3. Подтверждающие материалы</div>
+      <ul class="list">${r.materials.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul>
+    </div>
+
+    <div class="section">
+      <div class="section-title">4. История действий</div>
+      <div class="timeline">${r.history.map(x=>`<div class="timeline-item"><div class="timeline-date">${escapeHtml(x.split(' — ')[0])}</div><div>${escapeHtml(x.split(' — ')[1] || x)}</div></div>`).join('')}</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">5. Сигналы ${tooltip('Обезличенные сигналы конкурирующей активности и связи с соседними классами решений, не раскрывающие иных клиентов.')}</div>
+      <ul class="list">${r.signals.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul>
+    </div>
+
+    <div class="section">
+      <div class="section-title">6. Нарушения и challenge</div>
+      <div class="notice"><strong>Нарушения</strong>${escapeHtml(r.violation)}</div>
+      <div class="notice"><strong>Challenge</strong>${r.signals.some(s=>s.toLowerCase().includes('challenge')) ? 'Есть активное оспаривание' : 'Активных challenge нет'}</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">7. Действия</div>
+      <div class="split-actions">
+        <button class="button button-secondary" data-open-modal="extend" data-entity="${escapeHtml(r.id)}">Продлить</button>
+        <button class="button button-secondary" data-open-modal="challenge" data-entity="${escapeHtml(r.id)}">Оспорить</button>
+        <button class="button button-danger" data-open-modal="removeProtection" data-entity="${escapeHtml(r.id)}">Снять</button>
+        <button class="button button-muted" data-open-modal="openDispute" data-entity="${escapeHtml(r.id)}">Открыть спор</button>
+      </div>
+    </div>
+  `;
+}
+function detailDispute(d){
+  return `
+    <div class="detail-title">Карточка спора</div>
+    <div class="detail-subtitle">${escapeHtml(d.id)} · ${escapeHtml(d.type)}</div>
+
+    <div class="section"><div class="section-title">Основание</div><div>${escapeHtml(d.basis)}</div></div>
+    <div class="section"><div class="section-title">Стороны</div><div>${escapeHtml(d.parties)}</div></div>
+    <div class="section"><div class="section-title">Аргументы</div><ul class="list">${d.arguments.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul></div>
+    <div class="section"><div class="section-title">Материалы</div><ul class="list">${d.materials.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul></div>
+    <div class="section"><div class="section-title">Результат автопроверки</div><div>${escapeHtml(d.auto)}</div></div>
+    <div class="section"><div class="section-title">Решения уровней</div><ul class="list">${d.levels.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul></div>
+    <div class="section"><div class="section-title">Финальное решение</div><div>${escapeHtml(d.final)}</div></div>
+    <div class="section"><div class="section-title">Действия</div>
+      <div class="split-actions">
+        <button class="button button-secondary" data-open-modal="decision" data-entity="${escapeHtml(d.id)}">Вынести решение</button>
+        <button class="button button-muted" data-open-modal="requestDocs" data-entity="${escapeHtml(d.id)}">Запросить материалы</button>
+      </div>
+    </div>
+  `;
+}
+function detailParticipant(item, kind){
+  return `
+    <div class="detail-title">Карточка участника</div>
+    <div class="detail-subtitle">${escapeHtml(item.name)} · ${kind==='vendor'?'Вендор':'Партнер'}</div>
+    <div class="section"><div class="section-title">Рейтинг</div><div class="kpi-value">${item.rating}/100</div></div>
+    <div class="section"><div class="section-title">Профиль</div>
+      <div class="definition-list">
+        <div>${kind==='vendor'?'Категория':'Специализация'}</div><div>${escapeHtml(kind==='vendor'?item.category:item.special)}</div>
+        <div>Активность</div><div>${escapeHtml(kind==='vendor'?item.activity:item.activeDeals + ' активных сделок')}</div>
+        <div>${kind==='vendor'?'Споры':'Win-rate'}</div><div>${escapeHtml(kind==='vendor'?item.disputes:item.winRate)}</div>
+      </div>
+    </div>
+    <div class="section"><div class="section-title">История</div><div>${escapeHtml(item.history)}</div></div>
+    <div class="section"><div class="section-title">Нарушения</div><div>${escapeHtml(item.violations)}</div></div>
+    <div class="section"><div class="section-title">Активность и факторы</div>
+      <ul class="list">
+        <li>Соблюдение защит: ${item.scoreFactors.protection}</li>
+        <li>Скорость: ${item.scoreFactors.speed}</li>
+        <li>Конфликты: ${item.scoreFactors.conflicts}</li>
+        <li>Решения: ${item.scoreFactors.decisions}</li>
+      </ul>
+    </div>
+  `;
+}
+function detailRating(item, kind){
+  return `
+    <div class="detail-title">Карточка рейтинга</div>
+    <div class="detail-subtitle">${escapeHtml(item.name)} · ${kind==='vendor'?'Вендор':'Партнер'}</div>
+    <div class="section"><div class="section-title">Итог</div><div class="kpi-value">${item.rating}/100</div></div>
+    <div class="section"><div class="section-title">Факторы</div>
+      <ul class="list">
+        <li>Соблюдение защит: ${item.scoreFactors.protection}</li>
+        <li>Скорость: ${item.scoreFactors.speed}</li>
+        <li>Конфликты: ${item.scoreFactors.conflicts}</li>
+        <li>Решения: ${item.scoreFactors.decisions}</li>
+      </ul>
+    </div>
+    <div class="section"><div class="section-title">История изменений</div>
+      <div class="timeline">
+        <div class="timeline-item"><div class="timeline-date">Январь 2026</div><div>88/100</div></div>
+        <div class="timeline-item"><div class="timeline-date">Февраль 2026</div><div>90/100</div></div>
+        <div class="timeline-item"><div class="timeline-date">Март 2026</div><div>${item.rating}/100</div></div>
+      </div>
+    </div>
+  `;
+}
+function detailSignal(sig){
+  return `
+    <div class="detail-title">Аналитический сигнал</div>
+    <div class="detail-subtitle">Обезличенный рыночный вывод</div>
+    <div class="section"><div class="section-title">Сигнал</div><div>${escapeHtml(sig.title || sig.subject)}</div></div>
+    <div class="section"><div class="section-title">Раскрытие</div><div>${escapeHtml(sig.detail || 'Детальное описание сигнала и его значения для стратегии участника рынка.')}</div></div>
+    <div class="section"><div class="section-title">Действие</div><button class="button button-secondary" id="gotoAnalyticsBtn">Открыть аналитику рынка</button></div>
+  `;
+}
+
+function openModal(type, entity=''){
+  const backdrop = el('modalBackdrop');
+  const title = el('modalTitle');
+  const subtitle = el('modalSubtitle');
+  const body = el('modalBody');
+  const footer = el('modalFooter');
+  let html = '', foot = '';
+  if(type==='newRegistration'){
+    title.textContent = 'Новая регистрация';
+    subtitle.textContent = 'Официальная форма подачи регистрации сделки / проекта';
+    html = `
+      <div class="form-grid">
+        <div><label class="form-label">Тип регистрации</label><select class="form-select"><option>Проект</option><option>Сделка</option></select></div>
+        <div><label class="form-label">Вендор</label><select class="form-select">${data.vendors.map(v=>`<option>${escapeHtml(v.name)}</option>`).join('')}</select></div>
+        <div class="full"><label class="form-label">Предмет регистрации</label><input class="form-input" value="Проект по контролю ИТ-активов и лицензионных рисков" /></div>
+        <div><label class="form-label">Клиент</label><input class="form-input" value="АО ВостокТранс" /></div>
+        <div><label class="form-label">Плановая сумма</label><input class="form-input" value="18 500 000 ₽" /></div>
+        <div><label class="form-label">Сегмент</label><select class="form-select"><option>Промышленность</option><option>Финансы</option></select></div>
+        <div><label class="form-label">Класс решений</label><select class="form-select"><option>Discovery</option><option>BI</option></select></div>
+        <div class="full"><label class="form-label">Подтверждающие материалы</label><textarea class="form-textarea">Встреча проведена, КП подготовлено, контакт ЛПР подтвержден, пилот согласован на апрель.</textarea></div>
+      </div>`;
+    foot = `<button class="button button-secondary" id="modalCancel">Отмена</button><button class="button" id="modalProceed">Отправить на регистрацию</button>`;
+  }
+  if(type==='extend'){
+    title.textContent = 'Продление защиты';
+    subtitle.textContent = `Регистрация ${entity}`;
+    html = `<div class="notice"><strong>Основание</strong>Для продления требуется подтвердить фактическую активность по сделке: встреча, КП, пилот, согласование, переписка.</div>
+      <div class="form-grid">
+        <div class="full"><label class="form-label">Основание продления</label><textarea class="form-textarea">Добавлены материалы по пилоту и обновленное КП, подтверждена новая встреча с заказчиком.</textarea></div>
+        <div><label class="form-label">Последняя активность</label><input class="form-input" value="31.03.2026" /></div>
+        <div><label class="form-label">Запрашиваемый срок</label><input class="form-input" value="30 дней" /></div>
+      </div>`;
+    foot = `<button class="button button-secondary" id="modalCancel">Отмена</button><button class="button" id="modalProceed">Передать на продление</button>`;
+  }
+  if(type==='challenge'){
+    title.textContent = 'Оспаривание регистрации';
+    subtitle.textContent = `Объект ${entity}`;
+    html = `<div class="form-grid">
+      <div class="full"><label class="form-label">Основание challenge</label><textarea class="form-textarea">Считаем, что текущая защита должна быть пересмотрена: проект фактически ведется другой стороной, материалы недостаточны, клиент не подтверждает активное сопровождение.</textarea></div>
+      <div><label class="form-label">Тип обращения</label><select class="form-select"><option>Challenge по качеству ведения</option><option>Спор по приоритету</option></select></div>
+      <div><label class="form-label">Срочность</label><select class="form-select"><option>Обычная</option><option>Высокая</option></select></div>
+    </div>`;
+    foot = `<button class="button button-secondary" id="modalCancel">Отмена</button><button class="button" id="modalProceed">Зарегистрировать challenge</button>`;
+  }
+  if(type==='removeProtection'){
+    title.textContent = 'Снятие защиты';
+    subtitle.textContent = `Объект ${entity}`;
+    html = `<div class="notice"><strong>Внимание</strong>Снятие защиты влияет на историю действий и может повлиять на рейтинг участника.</div>
+      <label class="form-label">Основание</label><textarea class="form-textarea">Отсутствие подтвержденной активности в установленный срок и истечение периода защиты.</textarea>`;
+    foot = `<button class="button button-secondary" id="modalCancel">Отмена</button><button class="button button-danger" id="modalProceed">Снять защиту</button>`;
+  }
+  if(type==='openDispute'){
+    title.textContent = 'Открытие спора';
+    subtitle.textContent = `Объект ${entity}`;
+    html = `<label class="form-label">Описание спора</label><textarea class="form-textarea">Просим открыть спор по нарушению порядка подтверждения и проверить наличие конкурирующей активности по данному проекту.</textarea>`;
+    foot = `<button class="button button-secondary" id="modalCancel">Отмена</button><button class="button" id="modalProceed">Открыть спор</button>`;
+  }
+  if(type==='decision'){
+    title.textContent = 'Процедура вынесения решения';
+    subtitle.textContent = `Арбитражный кейс ${entity}`;
+    html = `<div class="form-grid">
+      <div><label class="form-label">Результат</label><select class="form-select"><option>Подтвердить текущую защиту</option><option>Снять защиту</option><option>Назначить повторную проверку</option></select></div>
+      <div><label class="form-label">Уровень решения</label><select class="form-select"><option>Уровень 2</option><option>Уровень 3</option></select></div>
+      <div class="full"><label class="form-label">Мотивировка</label><textarea class="form-textarea">По результатам анализа истории действий, материалов и автопроверки установлено, что приоритет регистрации подтверждается, нарушение не доказано.</textarea></div>
+    </div>`;
+    foot = `<button class="button button-secondary" id="modalCancel">Отмена</button><button class="button" id="modalProceed">Зафиксировать решение</button>`;
+  }
+  if(type==='requestDocs'){
+    title.textContent = 'Запрос дополнительных материалов';
+    subtitle.textContent = `Арбитражный кейс ${entity}`;
+    html = `<label class="form-label">Что требуется</label><textarea class="form-textarea">Просим предоставить подтверждение последней активности, обновленное КП и протокол последней встречи с заказчиком.</textarea>`;
+    foot = `<button class="button button-secondary" id="modalCancel">Отмена</button><button class="button" id="modalProceed">Направить запрос</button>`;
+  }
+  body.innerHTML = html;
+  footer.innerHTML = foot;
+  backdrop.classList.remove('hidden');
+  if(el('modalCancel')) el('modalCancel').onclick = closeModal;
+  if(el('modalProceed')) el('modalProceed').onclick = ()=> {
+    closeModal();
+    openToastDetail(type, entity);
   };
 }
-
-function setDetails(html){ $('#details-content').classList.remove('muted'); $('#details-content').innerHTML = html; }
-
-function detailsRegistration(r){
-  setDetails(`
-    <div class="card"><div class="card-body">
-      <div class="badge ${r.statusClass}">${r.status}</div>
-      <div style="font-weight:700; margin:10px 0 8px; color:var(--brand)">${r.id}</div>
-      <div class="kv"><div class="kv-key">Партнер</div><div>${r.partner}</div></div>
-      <div class="kv"><div class="kv-key">Вендор</div><div>${r.vendor}</div></div>
-      <div class="kv"><div class="kv-key">Клиент</div><div>${r.client}</div></div>
-      <div class="kv"><div class="kv-key">Предмет</div><div>${r.subject}</div></div>
-      <div class="kv"><div class="kv-key">Сегмент</div><div>${r.segment}</div></div>
-      <div class="kv"><div class="kv-key">Класс решений</div><div>${r.class}</div></div>
-      <div class="kv"><div class="kv-key">Сумма</div><div>${r.amount}</div></div>
-      <div class="kv"><div class="kv-key">Жизненный цикл</div><div>${r.lifecycle}</div></div>
-    </div></div>
-    <div class="card" style="margin-top:12px;"><div class="card-header"><div><div class="card-title">Подтверждающие материалы</div></div></div><div class="card-body"><ul class="list-clean">${r.evidence.map(x=>`<li>${x}</li>`).join('')}</ul></div></div>
-    <div class="card" style="margin-top:12px;"><div class="card-header"><div><div class="card-title">История действий</div></div></div><div class="card-body"><div class="timeline">${r.timeline.map(t=>`<div class="timeline-item"><div class="timeline-date">${t[0]}</div><div>${t[1]}</div></div>`).join('')}</div></div></div>
-    <div class="card" style="margin-top:12px;"><div class="card-header"><div><div class="card-title">Сигналы и влияние на рейтинг</div></div></div><div class="card-body"><div>${r.alerts.join('<br>')}</div><div style="margin-top:8px" class="small">${r.ratingImpact}</div><div class="actions-row"><button class="ghost-btn" id="detail-extend">Продлить</button><button class="primary-btn" id="detail-dispute">Оспорить</button></div></div></div>
-  `);
-  const ex = document.getElementById('detail-extend'); if(ex) ex.onclick = ()=> alert('Демо: открывается процедура продления с приложением материалов.');
-  const ds = document.getElementById('detail-dispute'); if(ds) ds.onclick = ()=> alert('Демо: открывается процедура оспаривания регистрации.');
+function openToastDetail(type, entity){
+  const map = {
+    newRegistration: `Процедура завершена: регистрация сформирована и передана на автоматическую проверку.`,
+    extend: `Процедура завершена: запрос на продление по ${entity} зарегистрирован.`,
+    challenge: `Процедура завершена: challenge по ${entity} направлен в контур спора.`,
+    removeProtection: `Процедура завершена: инициировано снятие защиты по ${entity}.`,
+    openDispute: `Процедура завершена: спор по ${entity} открыт.`,
+    decision: `Процедура завершена: решение по ${entity} зафиксировано.`,
+    requestDocs: `Процедура завершена: запрос материалов по ${entity} направлен участникам.`
+  };
+  openDetail(`<div class="detail-title">Результат процедуры</div><div class="detail-subtitle">Формальное подтверждение действия</div><div class="notice"><strong>Статус</strong>${map[type]}</div><div class="notice"><strong>Примечание</strong>Прототип не сохраняет изменения, но показывает реалистичный следующий шаг делопроизводства.</div>`);
 }
+function closeModal(){ el('modalBackdrop').classList.add('hidden'); }
 
-function detailsDispute(d){
-  setDetails(`
-    <div class="card"><div class="card-body"><div class="badge ${d.statusClass}">${d.status}</div><div style="font-weight:700; margin:10px 0 8px; color:var(--brand)">${d.id}</div>
-      <div class="kv"><div class="kv-key">Сделка</div><div>${d.deal}</div></div>
-      <div class="kv"><div class="kv-key">Тип</div><div>${d.type}</div></div>
-      <div class="kv"><div class="kv-key">Заявитель</div><div>${d.complainant}</div></div>
-      <div class="kv"><div class="kv-key">Другая сторона</div><div>${d.otherParty}</div></div>
-      <div class="kv"><div class="kv-key">Уровень</div><div>${d.level}</div></div>
-      <div class="kv"><div class="kv-key">SLA</div><div>${d.sla}</div></div>
-      <div style="margin-top:10px">${d.summary}</div>
-    </div></div>
-    <div class="card" style="margin-top:12px;"><div class="card-header"><div><div class="card-title">Результат автопроверки</div></div></div><div class="card-body">${d.auto}</div></div>
-    <div class="card" style="margin-top:12px;"><div class="card-header"><div><div class="card-title">Решения по уровням</div></div></div><div class="card-body"><ul class="list-clean">${d.decisions.map(x=>`<li>${x}</li>`).join('')}</ul></div></div>
-  `);
-}
+el('modalClose').onclick = closeModal;
+el('modalBackdrop').addEventListener('click', (e)=>{ if(e.target === el('modalBackdrop')) closeModal(); });
+el('openJournalBtn').onclick = ()=> { state.section = 'journal'; render(); };
+el('roleSelect').onchange = (e)=>{ state.role = e.target.value; state.section = 'summary'; render(); };
+el('globalSearch').oninput = ()=> { if(state.section === 'registry') renderRegistry(); };
 
-function detailsVendor(v){
-  setDetails(`
-    <div class="card"><div class="card-body"><div class="badge ${badgeClass(v.trust)}">${v.trust}</div><div style="font-weight:700; margin:10px 0 8px; color:var(--brand)">${v.name}</div>
-      <div class="kv"><div class="kv-key">Категория</div><div>${v.category}</div></div>
-      <div class="kv"><div class="kv-key">Сегмент</div><div>${v.segment}</div></div>
-      <div class="kv"><div class="kv-key">Итоговый рейтинг</div><div>${v.rating}/100</div></div>
-      <div class="kv"><div class="kv-key">Прозрачность</div><div>${v.transparency}</div></div>
-      <div class="kv"><div class="kv-key">Скорость решений</div><div>${v.speed}</div></div>
-      <div class="kv"><div class="kv-key">Активные регистрации</div><div>${v.active}</div></div>
-      <div class="kv"><div class="kv-key">Споры</div><div>${v.disputes}</div></div>
-      <div style="margin-top:10px">${v.note}</div></div></div>`);
-}
-
-function detailsPartner(p){
-  setDetails(`
-    <div class="card"><div class="card-body"><div class="badge ${badgeClass(p.tier)}">${p.tier}</div><div style="font-weight:700; margin:10px 0 8px; color:var(--brand)">${p.name}</div>
-      <div class="kv"><div class="kv-key">Специализация</div><div>${p.specialization}</div></div>
-      <div class="kv"><div class="kv-key">Итоговый рейтинг</div><div>${p.rating}/100</div></div>
-      <div class="kv"><div class="kv-key">Win-rate</div><div>${p.winRate}</div></div>
-      <div class="kv"><div class="kv-key">Активные регистрации</div><div>${p.active}</div></div>
-      <div class="kv"><div class="kv-key">Споры</div><div>${p.disputes}</div></div>
-      <div style="margin-top:10px">${p.note}</div></div></div>`);
-}
-
-function detailsSignal(sig){
-  setDetails(`
-    <div class="card"><div class="card-body"><div class="badge ${sig.trend==='Снижение'?'warn':'info'}">${sig.trend}</div><div style="font-weight:700; margin:10px 0 8px; color:var(--brand)">${sig.title}</div><div>${sig.text}</div><div style="margin-top:10px" class="small">${sig.impact}</div></div></div>
-    <div class="card" style="margin-top:12px;"><div class="card-header"><div><div class="card-title">Обезличенная динамика</div></div></div><div class="card-body"><div class="bars">${sig.chart.map((v,i)=>`<div class="bar-col"><div class="bar" style="height:${v*2.2}px"></div><div class="small">M${i+1}</div><div class="small">${v}</div></div>`).join('')}</div></div></div>`);
-}
-
-function bindDynamic(){
-  $all('[data-reg]').forEach(el => el.onclick = ()=> detailsRegistration(datasets.registrations[+el.dataset.reg]));
-  $all('[data-dispute]').forEach(el => el.onclick = ()=> detailsDispute(datasets.disputes[+el.dataset.dispute]));
-  $all('[data-vendor]').forEach(el => el.onclick = ()=> detailsVendor(datasets.vendors[+el.dataset.vendor]));
-  $all('[data-partner]').forEach(el => el.onclick = ()=> detailsPartner(datasets.partners[+el.dataset.partner]));
-  $all('[data-market]').forEach(el => el.onclick = ()=> detailsSignal(datasets.marketSignals[+el.dataset.market]));
-  $all('[data-signal]').forEach(el => el.onclick = ()=> detailsSignal(datasets.marketSignals[+el.dataset.signal % datasets.marketSignals.length]));
-  $all('[data-notice]').forEach(el => {
-    const n = datasets.summary[appState.role].notices[+el.dataset.notice];
-    el.onclick = ()=> setDetails(`<div class="card"><div class="card-body"><div class="badge ${n.tag}">${n.title}</div><div style="margin-top:10px">${n.text}</div><div style="margin-top:12px" class="small">Следующее действие зависит от текущей роли и регламента системы.</div></div></div>`);
-  });
-  $all('[data-ratingtab]').forEach(el => el.onclick = ()=> {
-    $all('[data-ratingtab]').forEach(x=>x.classList.toggle('active', x===el));
-    $('#ratings-wrap').innerHTML = ratingsTable(el.dataset.ratingtab);
-    bindDynamic();
-  });
-}
-
-function initEvents(){
-  $all('.role-btn').forEach(btn => btn.addEventListener('click', ()=> { appState.role = btn.dataset.role; render(); }));
-  $all('.nav-btn').forEach(btn => btn.addEventListener('click', ()=> { appState.section = btn.dataset.section; render(); }));
-  $('#open-register-flow').addEventListener('click', ()=> { openModal(); renderRegisterFlow(); });
-  $('#close-modal').addEventListener('click', closeModal);
-  $('#modal-backdrop').addEventListener('click', closeModal);
-  $('#clear-details').addEventListener('click', ()=> { $('#details-content').className = 'details-content muted'; $('#details-content').textContent = 'Выберите запись в реестре, уведомление, участника или аналитический сигнал.'; });
-  $('#global-search').addEventListener('keydown', (e)=> {
-    if(e.key === 'Enter') {
-      const q = e.target.value.toLowerCase();
-      const found = datasets.registrations.find(r => r.id.toLowerCase().includes(q) || r.client.toLowerCase().includes(q) || r.partner.toLowerCase().includes(q));
-      if(found){ appState.section='registry'; render(); detailsRegistration(found); }
-      else alert('В демо-поиске ничего не найдено. Попробуйте DR-2026-00124 или ВолгаЭнерго.');
-    }
-  });
-}
-
-initEvents();
 render();

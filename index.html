@@ -1,9 +1,9 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>White Deal — Реестр регистраций сделок</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>White Deal — Единый реестр регистраций сделок</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -11,73 +11,65 @@
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-mark">WD</div>
-        <div>
-          <div class="brand-title">White Deal</div>
-          <div class="brand-sub">Единый реестр регистраций сделок</div>
+        <div class="brand-text">
+          <div class="brand-title">White Deal Registry</div>
+          <div class="brand-subtitle">Единый реестр регистраций сделок</div>
         </div>
       </div>
 
-      <div class="role-block">
-        <div class="section-label">Роль доступа</div>
-        <div class="role-switch">
-          <button class="role-btn active" data-role="partner">Партнер</button>
-          <button class="role-btn" data-role="vendor">Вендор</button>
-          <button class="role-btn" data-role="arbitrage">Арбитраж</button>
-          <button class="role-btn" data-role="market">Рынок</button>
-        </div>
+      <div class="role-switch">
+        <label for="roleSelect">Роль доступа</label>
+        <select id="roleSelect">
+          <option value="partner">Партнер</option>
+          <option value="vendor">Вендор</option>
+          <option value="arbitrage">Арбитраж</option>
+          <option value="market">Обзор рынка</option>
+        </select>
       </div>
 
-      <nav class="nav">
-        <div class="section-label">Разделы</div>
-        <button class="nav-btn active" data-section="summary">Сводка</button>
-        <button class="nav-btn" data-section="registry">Реестр регистраций</button>
-        <button class="nav-btn" data-section="disputes">Реестр споров</button>
-        <button class="nav-btn" data-section="catalog-vendors">Каталог вендоров</button>
-        <button class="nav-btn" data-section="catalog-partners">Каталог партнеров</button>
-        <button class="nav-btn" data-section="ratings">Рейтинги</button>
-        <button class="nav-btn" data-section="analytics">Аналитика рынка</button>
-        <button class="nav-btn" data-section="history">Журнал действий</button>
-      </nav>
+      <nav class="nav" id="nav"></nav>
+
+      <div class="sidebar-note">
+        <div class="sidebar-note-title">Статус системы</div>
+        <div>Демо-прототип без бэка. Все действия имитируются, данные синтетические.</div>
+      </div>
     </aside>
 
-    <main class="main-area">
+    <div class="content-shell">
       <header class="topbar">
-        <div>
-          <h1 id="page-title">Сводка</h1>
-          <div class="page-subtitle" id="page-subtitle">Операционная сводка по текущей роли и ключевым действиям</div>
+        <div class="topbar-left">
+          <div class="page-title" id="pageTitle">Сводка</div>
+          <div class="page-subtitle" id="pageSubtitle">Операционная панель участника рынка</div>
         </div>
-        <div class="topbar-actions">
-          <input id="global-search" class="search" placeholder="Поиск по номеру, клиенту, участнику" />
-          <button class="ghost-btn" id="open-register-flow">Новая регистрация</button>
+        <div class="topbar-right">
+          <input id="globalSearch" class="search-input" type="text" placeholder="Поиск по номеру, участнику, предмету, типу..." />
+          <button class="button button-secondary" id="openJournalBtn">Журнал действий</button>
         </div>
       </header>
 
-      <section id="content"></section>
-    </main>
-
-    <aside class="details-panel">
-      <div class="details-header">
-        <div class="details-title">Карточка объекта</div>
-        <button class="link-btn" id="clear-details">Очистить</button>
+      <div class="main-layout">
+        <main class="center-pane" id="centerPane"></main>
+        <aside class="detail-pane" id="detailPane">
+          <div class="detail-empty">
+            <div class="detail-empty-title">Панель сведений</div>
+            <div class="detail-empty-text">Выберите запись из реестра, уведомление, сигнал или участника. Подробная карточка откроется здесь без перехода на отдельный экран.</div>
+          </div>
+        </aside>
       </div>
-      <div id="details-content" class="details-content muted">
-        Выберите запись в реестре, уведомление, участника или аналитический сигнал.
-      </div>
-    </aside>
+    </div>
   </div>
 
-  <div class="modal hidden" id="modal">
-    <div class="modal-backdrop" id="modal-backdrop"></div>
-    <div class="modal-card">
+  <div class="modal-backdrop hidden" id="modalBackdrop">
+    <div class="modal" id="modal">
       <div class="modal-header">
         <div>
-          <div class="modal-title" id="modal-title">Процедура</div>
-          <div class="modal-subtitle" id="modal-subtitle">Пошаговая форма</div>
+          <div class="modal-title" id="modalTitle">Процедура</div>
+          <div class="modal-subtitle" id="modalSubtitle">Формальный шаг процесса</div>
         </div>
-        <button class="link-btn" id="close-modal">Закрыть</button>
+        <button class="modal-close" id="modalClose">×</button>
       </div>
-      <div class="modal-body" id="modal-body"></div>
-      <div class="modal-footer" id="modal-footer"></div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer" id="modalFooter"></div>
     </div>
   </div>
 
